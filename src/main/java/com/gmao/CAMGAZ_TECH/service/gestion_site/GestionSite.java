@@ -1,5 +1,6 @@
 package com.gmao.CAMGAZ_TECH.service.gestion_site;
 
+import com.gmao.CAMGAZ_TECH.model.gestion_site.EquipementInstalle;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.Site;
 import org.springframework.data.crossstore.ChangeSetPersister;
 
@@ -12,7 +13,7 @@ public interface GestionSite {
 
     public Site getSiteByID(int siteID) throws ChangeSetPersister.NotFoundException;
 
-    public boolean updateSite(int siteId, Site site, Map<Integer,Date> dateMap);
+    public Site updateSite(int siteId, Site site, List<EquipementInstalle> nouveauxEquipementInstalle);
 
     public boolean deleteSite(int siteId);
 

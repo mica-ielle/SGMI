@@ -16,6 +16,7 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class GestionSiteImpl implements GestionSite{
@@ -79,63 +80,69 @@ public class GestionSiteImpl implements GestionSite{
     }
 
     @Override
-    public boolean updateSite(int siteId, Site site, Map<Integer,Date> dateMap) {
-        boolean check=siteRepository.existsById(siteId);
-        if(check) {
-            //get the site
-            this.site = siteRepository.findById(siteId).get();
+    public Site updateSite(int siteId, Site site, List<EquipementInstalle> nouveauxEquipementInstalle) {
+        this.site = siteRepository.findById(siteId).get();
 
-            this.site.setNom(site.getNom());
-            this.site.setVille(site.getVille());
-            this.site.setNom_contact(site.getNom_contact());
-            this.site.setTel_contact(site.getTel_contact());
+        this.site.setNom(site.getNom());
+        this.site.setVille(site.getVille());
+        this.site.setNom_contact(site.getNom_contact());
+        this.site.setTel_contact(site.getTel_contact());
 
-            List<EquipementInstalle> equipementInstalleList = new ArrayList<>();
 
-            try {
-                for (EquipementInstalle e:getSiteByID(siteId).getEquipementInstalles()) {
-                    equipementInstalleList.add(
-                            updateEquipementInstalle(
-                                    e.getId_equipementInstalle(),
-                                    siteId,
-                                    e.getEquipement().getId_equipement(),
-                                    e.getDate_installation(),
-                                    dateMap
-                            )
-                    );
-                }
-            } catch (ChangeSetPersister.NotFoundException e) {
-                throw new RuntimeException(e);
+        for (EquipementInstalle equipementInstalle:nouveauxEquipementInstalle) {
+
+
+            Optional<EquipementInstalle> existingEquipementInstalle = equipementInstalleRepository.findById(equipementInstalle.getId_equipementInstalle());
+
+            if ((existingEquipementInstalle.isPresent())){
+
+                EquipementInstalle equipementInstalleToUpdate = existingEquipementInstalle.get();
+
+                updateEquipementInstalle(siteId, this.site, nouveauxEquipementInstalle);
+                equipementInstalleRepository.save(equipementInstalleToUpdate);
+            }else {
+                equipementInstalleRepository.save(equipementInstalle);
             }
-
-            this.site.setEquipementInstalles(equipementInstalleList);
-
-            logger.info("site successfully updated ");
-            //save modifications
-            siteRepository.save(this.site);
         }
-        return check;
+
+        this.site.setEquipementInstalles(site.getEquipementInstalles());
+
+        logger.info("site successfully updated ");
+
+        return siteRepository.save(this.site);
     }
 
 
-   public EquipementInstalle updateEquipementInstalle(int id_equipementInstalle, int siteID, int equipementID, Date dateInstall, Map<Integer,Date> dateMap) {
-        EquipementInstalle ei = equipementInstalleRepository.findById(id_equipementInstalle).get();
+   public void updateEquipementInstalle(int siteID, Site site, List<EquipementInstalle> nouveauxEquipementsInstalles) {
 
-        try {
-            ei.setSite(getSiteByID(siteID));
-            ei.setEquipement(service_equipement.getEquipementByID(equipementID));
-            ei.setDate_installation(dateInstall);
+        site.getEquipementInstalles().removeIf(existingEquipementInstalle ->
+                nouveauxEquipementsInstalles.stream().noneMatch(
 
-            ei.setDerniere_maintenance(dateMap);
+                        nouveauEquipementsInstalle -> nouveauEquipementsInstalle.getId_equipementInstalle() == existingEquipementInstalle.getId_equipementInstalle())
+        );
+        for (EquipementInstalle nouveauEquipementInstalle : nouveauxEquipementsInstalles){
+            Optional<EquipementInstalle> existingEquipementInstalle = equipementInstalleRepository.findById(nouveauEquipementInstalle.getId_equipementInstalle());
+            if (existingEquipementInstalle.isPresent()){
+                try {
+
+                    EquipementInstalle equipementInstalleToUpdate = existingEquipementInstalle.get();
+                    equipementInstalleToUpdate.setDate_installation(nouveauEquipementInstalle.getDate_installation());
+                    equipementInstalleToUpdate.setSite(getSiteByID(siteID));
+                    equipementInstalleToUpdate.setEquipement(nouveauEquipementInstalle.getEquipement());
+                    equipementInstalleToUpdate.setDerniere_maintenance(nouveauEquipementInstalle.getDerniere_maintenance());
 
 
-        } catch (ChangeSetPersister.NotFoundException e) {
-            throw new RuntimeException(e);
+                    equipementInstalleRepository.save(equipementInstalleToUpdate);
+                } catch (ChangeSetPersister.NotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }else {
+                nouveauEquipementInstalle.setSite(site);
+
+                equipementInstalleRepository.save(nouveauEquipementInstalle);
+                site.getEquipementInstalles().add(nouveauEquipementInstalle);
+            }
         }
-
-        logger.info("EquipementInstalle successfully updated ");
-        //save modifications
-        return equipementInstalleRepository.save(ei);
 
     }
 
