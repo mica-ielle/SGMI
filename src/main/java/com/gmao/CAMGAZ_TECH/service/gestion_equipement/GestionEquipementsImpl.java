@@ -1,11 +1,11 @@
-package com.gmao.CAMGAZ_TECH.service;
+package com.gmao.CAMGAZ_TECH.service.gestion_equipement;
 
-import com.gmao.CAMGAZ_TECH.model.Equipement;
-import com.gmao.CAMGAZ_TECH.model.Piece;
-import com.gmao.CAMGAZ_TECH.model.Tache;
-import com.gmao.CAMGAZ_TECH.repository.EquipementRepository;
-import com.gmao.CAMGAZ_TECH.repository.PieceRepository;
-import com.gmao.CAMGAZ_TECH.repository.TacheRepository;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Piece;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
+import com.gmao.CAMGAZ_TECH.repository.gestion_equipement.EquipementRepository;
+import com.gmao.CAMGAZ_TECH.repository.gestion_equipement.PieceRepository;
+import com.gmao.CAMGAZ_TECH.repository.gestion_equipement.TacheRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,52 +69,6 @@ public class GestionEquipementsImpl implements GestionEquipements {
             throw new ChangeSetPersister.NotFoundException();
         }
     }
-/*
-    @Override
-    public boolean updateEquipement(int equipementId, Equipement equipement) {
-        //check if an equipment with this reference exist
-        boolean check=equipementRepository.existsByReference(equipement.getReference());
-        if(check) {
-            try {
-                //get the equipment
-                this.equipement=getEquipementByID(equipementId) ;
-            } catch (ChangeSetPersister.NotFoundException e) {
-                //throw exception
-                e.printStackTrace();
-            }
-
-            List<Tache> tacheList = equipement.getTaches();
-            List<Piece> pieceList = equipement.getPieces();
-
-            for (Tache tache:tacheList) {
-                try {
-                    tache.setEquipement(getEquipementByID(e.getId_equipement()));
-                } catch (ChangeSetPersister.NotFoundException ex) {
-                    throw new RuntimeException(ex);
-                }
-                tacheRepository.save(tache);
-            }
-            for (Piece piece:pieceList) {
-                try {
-                    piece.setEquipement(getEquipementByID(e.getId_equipement()));
-                } catch (ChangeSetPersister.NotFoundException ex) {
-                    throw new RuntimeException(ex);
-                }
-                pieceRepository.save(piece);
-            }
-
-
-
-            //update tache + piece
-
-            logger.info("Equipement successfully updated ");
-            //save modifications
-            equipementRepository.save(this.equipement);
-        }
-        return check;
-    }
-
- */
 
     @Override
     public Tache updateTache(int tacheId, Tache tache) {

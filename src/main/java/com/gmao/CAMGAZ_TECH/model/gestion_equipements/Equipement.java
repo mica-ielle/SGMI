@@ -1,4 +1,4 @@
-package com.gmao.CAMGAZ_TECH.model;
+package com.gmao.CAMGAZ_TECH.model.gestion_equipements;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

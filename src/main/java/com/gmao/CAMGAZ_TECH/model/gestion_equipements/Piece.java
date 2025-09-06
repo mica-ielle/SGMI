@@ -1,6 +1,7 @@
-package com.gmao.CAMGAZ_TECH.model;
+package com.gmao.CAMGAZ_TECH.model.gestion_equipements;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -11,24 +12,23 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties("equipement")
-public class Tache {
+public class Piece {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id_tache;
-
+    private int id_piece;
     @ManyToOne
     @JoinColumn(name = "id_equipement")
     private Equipement equipement;
     private String nom;
-    private String type;
-    private String frequence;
+    private String reference;
 
-    public int getId_tache() {
-        return id_tache;
+    public int getId_piece() {
+        return id_piece;
     }
 
-    public void setId_tache(int id_tache) {
-        this.id_tache = id_tache;
+    public void setId_piece(int id_piece) {
+        this.id_piece = id_piece;
     }
 
     public Equipement getEquipement() {
@@ -47,19 +47,11 @@ public class Tache {
         this.nom = nom;
     }
 
-    public String getType() {
-        return type;
+    public String getReference() {
+        return reference;
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getFrequence() {
-        return frequence;
-    }
-
-    public void setFrequence(String frequence) {
-        this.frequence = frequence;
+    public void setReference(String reference) {
+        this.reference = reference;
     }
 }

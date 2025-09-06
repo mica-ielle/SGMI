@@ -1,8 +1,8 @@
-package com.gmao.CAMGAZ_TECH.service;
+package com.gmao.CAMGAZ_TECH.service.gestion_equipement;
 
-import com.gmao.CAMGAZ_TECH.model.Equipement;
-import com.gmao.CAMGAZ_TECH.model.Piece;
-import com.gmao.CAMGAZ_TECH.model.Tache;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Piece;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
 import org.springframework.data.crossstore.ChangeSetPersister;
 
 import java.util.List;

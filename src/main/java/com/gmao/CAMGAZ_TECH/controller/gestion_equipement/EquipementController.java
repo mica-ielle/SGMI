@@ -1,9 +1,9 @@
-package com.gmao.CAMGAZ_TECH.controller;
+package com.gmao.CAMGAZ_TECH.controller.gestion_equipement;
 
-import com.gmao.CAMGAZ_TECH.model.Equipement;
-import com.gmao.CAMGAZ_TECH.model.Piece;
-import com.gmao.CAMGAZ_TECH.model.Tache;
-import com.gmao.CAMGAZ_TECH.service.GestionEquipementsImpl;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Piece;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
+import com.gmao.CAMGAZ_TECH.service.gestion_equipement.GestionEquipementsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
