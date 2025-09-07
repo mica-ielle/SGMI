@@ -1,5 +1,6 @@
 package com.gmao.CAMGAZ_TECH.model.gestion_equipements;
 
+import com.gmao.CAMGAZ_TECH.model.gestion_stock.Piece;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;

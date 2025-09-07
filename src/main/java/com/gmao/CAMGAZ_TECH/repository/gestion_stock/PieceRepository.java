@@ -1,6 +1,6 @@
-package com.gmao.CAMGAZ_TECH.repository.gestion_equipement;
+package com.gmao.CAMGAZ_TECH.repository.gestion_stock;
 
-import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Piece;
+import com.gmao.CAMGAZ_TECH.model.gestion_stock.Piece;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

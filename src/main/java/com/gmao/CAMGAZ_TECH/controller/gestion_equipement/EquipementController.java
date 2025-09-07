@@ -1,7 +1,7 @@
 package com.gmao.CAMGAZ_TECH.controller.gestion_equipement;
 
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
-import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Piece;
+import com.gmao.CAMGAZ_TECH.model.gestion_stock.Piece;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
 import com.gmao.CAMGAZ_TECH.service.gestion_equipement.GestionEquipementsImpl;
 import org.slf4j.Logger;
@@ -35,12 +35,6 @@ public class EquipementController {
         return equipementList;
     }
 
-/*    @PutMapping("/update/{equipementId}")
-    public boolean update(@PathVariable int equipementId, @RequestBody Equipement equipement)
-    {
-        return service.updateEquipement(equipementId,equipement);
-    }
- */
     @PutMapping("/update_tache/{tacheId}")
     public Tache update(@PathVariable int tacheId, @RequestBody Tache tache)
     {

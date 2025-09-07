@@ -1,10 +1,10 @@
 package com.gmao.CAMGAZ_TECH.service.gestion_equipement;
 
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
-import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Piece;
+import com.gmao.CAMGAZ_TECH.model.gestion_stock.Piece;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
 import com.gmao.CAMGAZ_TECH.repository.gestion_equipement.EquipementRepository;
-import com.gmao.CAMGAZ_TECH.repository.gestion_equipement.PieceRepository;
+import com.gmao.CAMGAZ_TECH.repository.gestion_stock.PieceRepository;
 import com.gmao.CAMGAZ_TECH.repository.gestion_equipement.TacheRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
