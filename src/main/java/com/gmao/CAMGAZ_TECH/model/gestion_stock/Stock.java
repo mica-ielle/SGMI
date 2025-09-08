@@ -19,7 +19,7 @@ public class Stock {
     private int seuil_critique;
 
     @ManyToOne
-    @JoinColumn(name = "id_equipement")
+    @JoinColumn(name = "id_piece")
     private Piece piece;
 
     public int getId_stock() {

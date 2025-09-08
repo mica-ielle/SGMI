@@ -1,7 +1,10 @@
 package com.gmao.CAMGAZ_TECH.model.gestion_equipements;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -21,8 +24,24 @@ public class Tache {
     @JoinColumn(name = "id_equipement")
     private Equipement equipement;
     private String nom;
-    private String type;
-    private String frequence;
+
+    @ManyToOne
+    @JoinColumn(name = "id_occurenceMainteance")
+    private OccurenceMainteance occurenceMainteance;
+
+
+    public enum TypeTache {
+        VISITE,
+        ENTRETIEN,
+        PREVENTIF
+    }
+
+    private TypeTache type;
+
+
+    @ManyToOne
+    @JoinColumn(name = "id_frequence")
+    private Frequence frequence;
 
     public int getId_tache() {
         return id_tache;
@@ -48,19 +67,54 @@ public class Tache {
         this.nom = nom;
     }
 
-    public String getType() {
+    public TypeTache getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(TypeTache type) {
         this.type = type;
     }
 
-    public String getFrequence() {
+    public Frequence getFrequence() {
         return frequence;
     }
 
-    public void setFrequence(String frequence) {
+    public void setFrequence(Frequence frequence) {
         this.frequence = frequence;
     }
+
+
+    public OccurenceMainteance getOccurenceMainteance() {
+        return occurenceMainteance;
+    }
+
+    public void setOccurenceMainteance(OccurenceMainteance occurenceMainteance) {
+        this.occurenceMainteance = occurenceMainteance;
+    }
+
+    public String afficherFrequence() {
+        if (frequence.getFrequenceStandard() != null) {
+            return frequence.getFrequenceStandard().name();
+        } else if (frequence.getUnitePersonnalisee() == Frequence.UniteFrequence.HEURES_UTILISATION) {
+            Double mois = frequence.calculerEquivalenceEnMois();
+            return mois != null ? String.format("≈ %.2f mois (basé sur %d h à %.2f h/j)",
+                    mois, frequence.getHeuresTotales(), frequence.getHeuresMoyennesParJour()) : "Fréquence invalide";
+        } else {
+            return frequence.getValeurPersonnalisee() + " " + frequence.getUnitePersonnalisee();
+        }
+    }
+
+
+    public Tache cloneSansRelations() {
+        Tache clone = new Tache();
+
+        clone.setNom(this.nom);
+        clone.setType(this.type);
+        clone.setFrequence(this.frequence);
+        clone.setEquipement(this.equipement);
+
+        return clone;
+    }
+
+
 }

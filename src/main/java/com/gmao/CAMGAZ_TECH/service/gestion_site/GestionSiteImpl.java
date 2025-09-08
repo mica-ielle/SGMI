@@ -1,11 +1,14 @@
 package com.gmao.CAMGAZ_TECH.service.gestion_site;
 
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.EquipementInstalle;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.Site;
+import com.gmao.CAMGAZ_TECH.model.gestion_stock.Stock;
 import com.gmao.CAMGAZ_TECH.repository.gestion_site.EquipementInstalleRepository;
 import com.gmao.CAMGAZ_TECH.repository.gestion_site.SiteRepository;
 import com.gmao.CAMGAZ_TECH.service.gestion_equipement.GestionEquipementsImpl;
+import com.gmao.CAMGAZ_TECH.service.gestion_planning.GestionPlanningImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +16,7 @@ import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +27,9 @@ public class GestionSiteImpl implements GestionSite{
 
     private final SiteRepository siteRepository;
     private final EquipementInstalleRepository equipementInstalleRepository;
+
+    @Autowired
+    private GestionPlanningImpl gestionPlanning;
 
     private Site site;
 
@@ -58,6 +65,13 @@ public class GestionSiteImpl implements GestionSite{
             } catch (ChangeSetPersister.NotFoundException ex) {
                 throw new RuntimeException(ex);
             }
+
+            OccurenceMainteance occurenceMainteanceSite = new OccurenceMainteance();
+            occurenceMainteanceSite.setStatut(OccurenceMainteance.StatutMaintenance.PLANIFIEE);
+            occurenceMainteanceSite.setDatePrevue(LocalDate.now());
+
+            gestionPlanning.createOccurenceMainteance(occurenceMainteanceSite,equipementId);
+
             equipementInstalleRepository.save(e);
         }
 
@@ -177,4 +191,6 @@ public class GestionSiteImpl implements GestionSite{
     public List<Site> findAllSites() {
         return siteRepository.findAll();
     }
+
+
 }

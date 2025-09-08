@@ -2,7 +2,6 @@ package com.gmao.CAMGAZ_TECH.model.gestion_site;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
-import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -11,7 +10,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.sql.Date;
-import java.util.List;
 import java.util.Map;
 
 @Entity

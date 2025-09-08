@@ -13,17 +13,10 @@ public interface GestionEquipements {
 
     public Equipement getEquipementByID(int id) throws ChangeSetPersister.NotFoundException;
 
-
-    public Tache updateTache(int tacheId, Tache tache);
-
-    public Piece updatePiece(int pieceId, Piece piece);
+    public Equipement updateEquipement(int equipementId, List<Tache> tacheList, List<Piece> pieceList);
 
     public boolean deleteEquipement(int equipementId);
 
     public List<Equipement> findAllEquipements() ;
-
-    public List<Equipement> readByType(String type);
-
-
 
 }

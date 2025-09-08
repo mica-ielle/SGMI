@@ -1,5 +1,6 @@
 package com.gmao.CAMGAZ_TECH.service.gestion_stock;
 
+import com.gmao.CAMGAZ_TECH.DTO.SortieStock;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
 import com.gmao.CAMGAZ_TECH.model.gestion_stock.Piece;
@@ -22,7 +23,9 @@ public interface GestionStock {
 
 
     public Stock entreeStock(int stockId, int quantitePlus);
-    public Stock sortieStock(int stockId, int quantiteMoins);
+    public SortieStock sortieStock(int stockId, int quantiteMoins);
 
+
+    public Stock getByPiece(Piece piece);
 
 }

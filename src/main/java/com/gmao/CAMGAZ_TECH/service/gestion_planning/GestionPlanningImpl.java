@@ -1,0 +1,270 @@
+package com.gmao.CAMGAZ_TECH.service.gestion_planning;
+
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Frequence;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.FicheIntervention;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.PieceRemplacee;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.TachePlanifie;
+import com.gmao.CAMGAZ_TECH.model.gestion_site.Site;
+import com.gmao.CAMGAZ_TECH.repository.gestion_planning.FicheInterventionRepository;
+import com.gmao.CAMGAZ_TECH.repository.gestion_planning.OccurenceMaintenanceRepository;
+import com.gmao.CAMGAZ_TECH.repository.gestion_planning.PieceRemplaceeRepository;
+import com.gmao.CAMGAZ_TECH.repository.gestion_planning.TachePlanifieRepository;
+import com.gmao.CAMGAZ_TECH.repository.gestion_stock.PieceRepository;
+import com.gmao.CAMGAZ_TECH.service.gestion_equipement.GestionEquipementsImpl;
+import com.gmao.CAMGAZ_TECH.service.gestion_site.GestionSiteImpl;
+import com.gmao.CAMGAZ_TECH.service.gestion_stock.GestionStockImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.stereotype.Service;
+
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class GestionPlanningImpl implements GestionPlanning{
+
+    private final FicheInterventionRepository ficheInterventionRepository;
+    private final OccurenceMaintenanceRepository occurenceMaintenanceRepository;
+    private final PieceRemplaceeRepository pieceRemplaceeRepository;
+    private final TachePlanifieRepository tachePlanifieRepository;
+    private final PieceRepository pieceRepository;
+
+
+    @Autowired
+    private GestionEquipementsImpl gestionEquipements;
+
+    @Autowired
+    @Lazy
+    private GestionSiteImpl gestionSite;
+
+    @Autowired
+    private GestionStockImpl gestionStock;
+
+    final static Logger logger = LoggerFactory.getLogger(GestionPlanningImpl.class);
+
+
+    public GestionPlanningImpl(FicheInterventionRepository ficheInterventionRepository, OccurenceMaintenanceRepository occurenceMaintenanceRepository, PieceRemplaceeRepository pieceRemplaceeRepository, TachePlanifieRepository tachePlanifieRepository, PieceRepository pieceRepository) {
+        this.ficheInterventionRepository = ficheInterventionRepository;
+        this.occurenceMaintenanceRepository = occurenceMaintenanceRepository;
+        this.pieceRemplaceeRepository = pieceRemplaceeRepository;
+        this.tachePlanifieRepository = tachePlanifieRepository;
+        this.pieceRepository = pieceRepository;
+    }
+
+
+    @Override
+    public OccurenceMainteance createOccurenceMainteance(OccurenceMainteance occurenceMainteancePl, int equipementId) {
+
+
+        try {
+            occurenceMainteancePl.setEquipement(gestionEquipements.getEquipementByID(equipementId));
+
+            List<Tache> clonedTaches = new ArrayList<>();
+            for (Tache t : occurenceMainteancePl.getTaches()) {
+                Tache clone = t.cloneSansRelations();
+                //clone.setOccurenceMainteance(oc);
+                clonedTaches.add(clone);
+            }
+            occurenceMainteancePl.setTaches(clonedTaches);
+
+        } catch (ChangeSetPersister.NotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        OccurenceMainteance oc = occurenceMaintenanceRepository.save(occurenceMainteancePl);
+
+        try {
+            for (Tache t : gestionEquipements.getEquipementByID(equipementId).getTaches()) {
+                updatOccurenceMaintenance(oc.getId_occurenceMainteance(),t);
+
+                logger.info("OccurenceMainteance successfully created: "+oc.getId_occurenceMainteance()+" _ "+t.getId_tache());
+            }
+        } catch (ChangeSetPersister.NotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        logger.info("OccurenceMainteance successfully created: "+occurenceMainteancePl.toString());
+
+        return oc;
+    }
+
+    private void updatOccurenceMaintenance(int occurenceID, Tache tache){
+        tache.setOccurenceMainteance(occurenceMaintenanceRepository.findById(occurenceID).get());
+    }
+
+
+    @Override
+    public int frequenceEnMois(int heureTotal, int heureMoyenne) {
+        return heureTotal/(30*heureMoyenne);
+    }
+
+    @Override
+    public List<OccurenceMainteance> getPlanningCalendrier() {
+        List<OccurenceMainteance> occurenceMainteanceList = occurenceMaintenanceRepository.findAll();
+
+        List<OccurenceMainteance> planning = new ArrayList<>();
+
+        for (OccurenceMainteance o:occurenceMainteanceList) {
+            LocalDate origine = o.getDatePrevue();
+            LocalDate fin = origine.plusYears(3);
+
+            /*for (Tache tache : o.getTaches()) {
+                LocalDate prochaineDate = origine;
+                Period intervalle = calculerIntervalle(tache.getFrequence());
+
+                while (prochaineDate.isBefore(fin)) {
+                    OccurenceMainteance occ = o;
+                    occ.setStatut(OccurenceMainteance.StatutMaintenance.PLANIFIEE);
+                    planning.add(occ);
+
+                    prochaineDate = prochaineDate.plus(intervalle);
+                }
+            }*/
+            planning.add(o);
+        }
+
+        return planning;
+    }
+
+    private Period calculerIntervalle(Frequence frequence) {
+        if (frequence.getFrequenceStandard() != null) {
+            return switch (frequence.getFrequenceStandard().getUnite()) {
+                case MOIS -> Period.ofMonths(frequence.getFrequenceStandard().getValeur());
+                case ANNEES -> Period.ofYears(frequence.getFrequenceStandard().getValeur());
+                default -> Period.ofDays(30); // fallback
+            };
+        } else if (frequence.getUnitePersonnalisee() == Frequence.UniteFrequence.HEURES_UTILISATION) {
+            double mois = frequence.calculerEquivalenceEnMois();
+            return Period.ofDays((int) (mois * 30));
+        } else {
+            return switch (frequence.getUnitePersonnalisee()) {
+                case JOURS -> Period.ofDays(frequence.getValeurPersonnalisee());
+                case SEMAINES -> Period.ofWeeks(frequence.getValeurPersonnalisee());
+                case MOIS -> Period.ofMonths(frequence.getValeurPersonnalisee());
+                case ANNEES -> Period.ofYears(frequence.getValeurPersonnalisee());
+                default -> Period.ofDays(30);
+            };
+        }
+    }
+
+
+    @Override
+    public List<OccurenceMainteance> getPlanningTableau() {
+        return null;
+    }
+
+    @Override
+    public TachePlanifie createTachePlanifie(TachePlanifie tachePlanifie, int siteId) {
+
+        try {
+            tachePlanifie.setSite(gestionSite.getSiteByID(siteId));
+        } catch (ChangeSetPersister.NotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        tachePlanifie.setStatut(TachePlanifie.StatutTache.PLANIFIEE);
+        logger.info("TachePlanifie successfully created: "+tachePlanifie.toString());
+        return tachePlanifieRepository.save(tachePlanifie);
+    }
+
+    @Override
+    public TachePlanifie affecteTachePlanifie(int idTachePlanifie, String nom) {
+
+        TachePlanifie t = tachePlanifieRepository.findById(idTachePlanifie).get();
+        t.setResponsable(nom);
+
+        tachePlanifieRepository.save(t);
+
+        return t;
+    }
+
+    @Override
+    public TachePlanifie reporterTachePlanifie(int idTachePlanifie, Date dateReporte) {
+
+        TachePlanifie t = tachePlanifieRepository.findById(idTachePlanifie).get();
+        t.setDatePrevu(dateReporte);
+        t.setStatut(TachePlanifie.StatutTache.REPORTEE);
+
+        tachePlanifieRepository.save(t);
+
+        return t;
+    }
+
+    @Override
+    public TachePlanifie annuleTachePlanifie(int idTachePlanifie) {
+
+
+        TachePlanifie t = tachePlanifieRepository.findById(idTachePlanifie).get();
+        t.setStatut(TachePlanifie.StatutTache.ANNULEE);
+
+        tachePlanifieRepository.save(t);
+
+        return t;
+    }
+
+    @Override
+    public boolean deleteTachePlanifie(int idTachePlanifie) {
+        boolean check1=tachePlanifieRepository.existsById(idTachePlanifie);
+        if(check1) {
+            tachePlanifieRepository.deleteById(idTachePlanifie);
+
+            logger.info("TachePlanifie was successfully deleted ");
+            return true;
+        }
+        else {
+            logger.info("TachePlanifie does not exist ");
+            return false;
+        }
+    }
+
+    @Override
+    public TachePlanifie valideTachePlanifie(int idTachePlanifie) {
+
+        TachePlanifie t = tachePlanifieRepository.findById(idTachePlanifie).get();
+        t.setStatut(TachePlanifie.StatutTache.REALISEE);
+
+        tachePlanifieRepository.save(t);
+
+        return t;
+    }
+
+    @Override
+    public FicheIntervention createFicheIntervention(FicheIntervention ficheIntervention,int equipementId, List<Integer> pieceList) {
+
+        FicheIntervention f = ficheInterventionRepository.save(ficheIntervention);
+
+        try {
+            int index = 0;
+            for (PieceRemplacee pieceRemplacee:ficheIntervention.getPiecesRemplacees()) {
+                //PieceRemplacee pi = pieceRemplaceeRepository.findById(pieceRemplacee.getId_pieceRemplacee()).get();
+                pieceRemplacee.setPiece(pieceRepository.findById(pieceList.get(index)).get());
+                pieceRemplacee.setFicheIntervention(ficheInterventionRepository.findById(f.getId_ficheIntervention()).get());
+
+                index++;
+                pieceRemplaceeRepository.save(pieceRemplacee);
+
+
+                gestionStock.sortieStock(gestionStock.getByPiece(pieceRemplacee.getPiece()).getId_stock(),pieceRemplacee.getQuantiteUtilisee());
+
+            }
+
+            ficheIntervention.setEquipement(gestionEquipements.getEquipementByID(equipementId));
+        } catch (ChangeSetPersister.NotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        logger.info("FicheIntervention successfully created: "+ficheIntervention.toString());
+        return ficheInterventionRepository.save(ficheIntervention);
+    }
+
+}

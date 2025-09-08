@@ -16,7 +16,16 @@ public class Equipement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id_equipement;
-    private String type;
+
+
+    public enum TypeEquipement {
+        MOTOPOMPE,
+        BORNE_DE_DISTRIBUTION,
+        ARMOIRE_ELECTRIQUE,
+        CITERNE
+    }
+
+    private TypeEquipement type;
     private String reference;
     private String nom;
     private String fournisseur;
@@ -27,6 +36,7 @@ public class Equipement {
     @OneToMany(mappedBy = "equipement")
     private List<Piece> pieces;
 
+
     public int getId_equipement() {
         return id_equipement;
     }
@@ -35,11 +45,11 @@ public class Equipement {
         this.id_equipement = id_equipement;
     }
 
-    public String getType() {
+    public TypeEquipement getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(TypeEquipement type) {
         this.type = type;
     }
 

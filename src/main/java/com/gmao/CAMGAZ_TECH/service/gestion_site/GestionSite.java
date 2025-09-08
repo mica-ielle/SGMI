@@ -18,4 +18,5 @@ public interface GestionSite {
     public boolean deleteSite(int siteId);
 
     public List<Site> findAllSites() ;
+
 }

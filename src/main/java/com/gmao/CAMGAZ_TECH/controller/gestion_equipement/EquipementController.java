@@ -1,5 +1,6 @@
 package com.gmao.CAMGAZ_TECH.controller.gestion_equipement;
 
+import com.gmao.CAMGAZ_TECH.DTO.RequetUpdateEquipement;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
 import com.gmao.CAMGAZ_TECH.model.gestion_stock.Piece;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
@@ -35,15 +36,10 @@ public class EquipementController {
         return equipementList;
     }
 
-    @PutMapping("/update_tache/{tacheId}")
-    public Tache update(@PathVariable int tacheId, @RequestBody Tache tache)
+    @PutMapping("/update/{equipementId}")
+    public Equipement update(@PathVariable int equipementId, @RequestBody RequetUpdateEquipement updateEquipement)
     {
-        return service.updateTache(tacheId,tache);
-    }
-    @PutMapping("/update_piece/{pieceId}")
-    public Piece update(@PathVariable int pieceId, @RequestBody Piece piece)
-    {
-        return service.updatePiece(pieceId,piece);
+        return service.updateEquipement(equipementId, updateEquipement.getTacheList(), updateEquipement.getPieceList());
     }
 
     @DeleteMapping("/delete/{equipementId}")

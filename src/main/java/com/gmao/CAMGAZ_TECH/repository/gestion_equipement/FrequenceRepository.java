@@ -1,11 +1,9 @@
 package com.gmao.CAMGAZ_TECH.repository.gestion_equipement;
 
-import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Frequence;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
-public interface EquipementRepository extends JpaRepository<Equipement,Integer> {
+public interface FrequenceRepository extends JpaRepository<Frequence,Integer> {
 }

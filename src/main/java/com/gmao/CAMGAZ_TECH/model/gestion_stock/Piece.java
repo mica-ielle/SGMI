@@ -18,8 +18,6 @@ public class Piece {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id_piece;
 
-    private String code_unique;
-
     @ManyToOne
     @JoinColumn(name = "id_equipement")
     private Equipement equipement;
@@ -32,14 +30,6 @@ public class Piece {
 
     public void setId_piece(int id_piece) {
         this.id_piece = id_piece;
-    }
-
-    public String getCode_unique() {
-        return code_unique;
-    }
-
-    public void setCode_unique(String code_unique) {
-        this.code_unique = code_unique;
     }
 
     public Equipement getEquipement() {

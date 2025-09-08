@@ -1,10 +1,13 @@
 package com.gmao.CAMGAZ_TECH.service.gestion_stock;
 
+import com.gmao.CAMGAZ_TECH.DTO.SortieStock;
+import com.gmao.CAMGAZ_TECH.model.gestion_stock.Piece;
 import com.gmao.CAMGAZ_TECH.model.gestion_stock.Stock;
 import com.gmao.CAMGAZ_TECH.repository.gestion_equipement.EquipementRepository;
 import com.gmao.CAMGAZ_TECH.repository.gestion_stock.PieceRepository;
 import com.gmao.CAMGAZ_TECH.repository.gestion_stock.StockRepository;
 import com.gmao.CAMGAZ_TECH.service.gestion_site.GestionSiteImpl;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.crossstore.ChangeSetPersister;
@@ -39,11 +42,12 @@ public class GestionStockImpl implements GestionStock{
         boolean check=pieceRepository.existsById(pieceID);
         if(check) {
             stock.setPiece(pieceRepository.findById(pieceID).get());
+
+            return stockRepository.save(stock);
         }else {
-            stock.setPiece(null);
+            throw new IllegalArgumentException("you chould join an existing piece");
         }
 
-        return stockRepository.save(stock);
     }
 
     @Override
@@ -107,14 +111,28 @@ public class GestionStockImpl implements GestionStock{
     }
 
     @Override
-    public Stock sortieStock(int stockId, int quantiteMoins) {
+    public SortieStock sortieStock(int stockId, int quantiteMoins) {
 
         Stock s = stockRepository.findById(stockId).get();
 
-        s.setQuantite(quantiteMoins);
+        int quantiteAtu = s.getQuantite()-quantiteMoins;
+        s.setQuantite(quantiteAtu);
 
         logger.info("Stock successfully updated ");
         //save modifications
-        return stockRepository.save(s);
+        return new SortieStock(stockRepository.save(s),checkSeuil(s.getSeuil_critique(),quantiteAtu));
     }
+    private boolean checkSeuil(int seuil, int quantiteActu){
+        if (seuil>quantiteActu){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    @Override
+    public Stock getByPiece(Piece piece){
+        return stockRepository.findByPiece(piece);
+    }
+
 }

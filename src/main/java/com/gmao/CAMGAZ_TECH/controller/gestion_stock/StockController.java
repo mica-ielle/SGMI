@@ -1,14 +1,8 @@
 package com.gmao.CAMGAZ_TECH.controller.gestion_stock;
 
 import com.gmao.CAMGAZ_TECH.DTO.RequetCreateStock;
-import com.gmao.CAMGAZ_TECH.DTO.RequetUpdateSite;
-import com.gmao.CAMGAZ_TECH.controller.gestion_equipement.EquipementController;
-import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
-import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
-import com.gmao.CAMGAZ_TECH.model.gestion_site.Site;
-import com.gmao.CAMGAZ_TECH.model.gestion_stock.Piece;
+import com.gmao.CAMGAZ_TECH.DTO.SortieStock;
 import com.gmao.CAMGAZ_TECH.model.gestion_stock.Stock;
-import com.gmao.CAMGAZ_TECH.service.gestion_equipement.GestionEquipementsImpl;
 import com.gmao.CAMGAZ_TECH.service.gestion_stock.GestionStockImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +40,7 @@ public class StockController {
         return service.entreeStock(stockId,quantiteP);
     }
     @PutMapping("/sortie/{stockId}")
-    public Stock sortie(@PathVariable int stockId, @RequestBody int quantiteM)
+    public SortieStock sortie(@PathVariable int stockId, @RequestBody int quantiteM)
     {
         return service.sortieStock(stockId,quantiteM);
     }

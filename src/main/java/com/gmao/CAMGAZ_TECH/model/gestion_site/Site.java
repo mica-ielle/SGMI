@@ -1,5 +1,7 @@
 package com.gmao.CAMGAZ_TECH.model.gestion_site;
 
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.TachePlanifie;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -20,6 +22,10 @@ public class Site {
     private String ville;
     private String nom_contact;
     private String tel_contact;
+
+
+    @OneToMany(mappedBy = "site")
+    private List<TachePlanifie> tachePlanifies;
 
     @OneToMany(mappedBy = "site")
     private List<EquipementInstalle> equipementInstalles;
@@ -70,5 +76,13 @@ public class Site {
 
     public void setEquipementInstalles(List<EquipementInstalle> equipementInstalles) {
         this.equipementInstalles = equipementInstalles;
+    }
+
+    public List<TachePlanifie> getTachePlanifies() {
+        return tachePlanifies;
+    }
+
+    public void setTachePlanifies(List<TachePlanifie> tachePlanifies) {
+        this.tachePlanifies = tachePlanifies;
     }
 }
