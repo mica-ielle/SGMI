@@ -14,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/equipement")
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class EquipementController {
 
     final static Logger logger = LoggerFactory.getLogger(EquipementController.class);

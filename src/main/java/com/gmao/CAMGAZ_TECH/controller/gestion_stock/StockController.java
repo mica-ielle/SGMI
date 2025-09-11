@@ -13,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/stock")
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class StockController {
 
     final static Logger logger = LoggerFactory.getLogger(StockController.class);
