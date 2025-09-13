@@ -19,4 +19,6 @@ public interface GestionSite {
 
     public List<Site> findAllSites() ;
 
+
+    public List<EquipementInstalle> installEquipement(int siteId, List<Integer> equipementsId, List<Date> datesInstall);
 }

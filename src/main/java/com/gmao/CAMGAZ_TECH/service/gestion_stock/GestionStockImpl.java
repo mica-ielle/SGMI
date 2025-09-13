@@ -103,7 +103,8 @@ public class GestionStockImpl implements GestionStock{
 
         Stock s = stockRepository.findById(stockId).get();
 
-        s.setQuantite(quantitePlus);
+        int quantiteAtu = s.getQuantite()+quantitePlus;
+        s.setQuantite(quantiteAtu);
 
         logger.info("Stock successfully updated ");
         //save modifications

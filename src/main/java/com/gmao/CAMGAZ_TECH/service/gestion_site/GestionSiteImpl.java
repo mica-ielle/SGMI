@@ -4,7 +4,6 @@ import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.EquipementInstalle;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.Site;
-import com.gmao.CAMGAZ_TECH.model.gestion_stock.Stock;
 import com.gmao.CAMGAZ_TECH.repository.gestion_site.EquipementInstalleRepository;
 import com.gmao.CAMGAZ_TECH.repository.gestion_site.SiteRepository;
 import com.gmao.CAMGAZ_TECH.service.gestion_equipement.GestionEquipementsImpl;
@@ -51,10 +50,11 @@ public class GestionSiteImpl implements GestionSite{
         Site s = siteRepository.save(site);
 
 
-        logger.info("Site ccc: "+site.getEquipementInstalles().size());
+       // logger.info("Site ccc: "+site.getEquipementInstalles().size());
+        logger.info("ei created: |||| "+equipementIdList.size());
 
-        EquipementInstalle e = new EquipementInstalle();
         for (int equipementId:equipementIdList) {
+            EquipementInstalle e = new EquipementInstalle();
             try {
                 e.setSite(getSiteByID(s.getId_site()));
                 Equipement currentEquipement = service_equipement.getEquipementByID(equipementId);
@@ -73,6 +73,7 @@ public class GestionSiteImpl implements GestionSite{
             gestionPlanning.createOccurenceMainteance(occurenceMainteanceSite,equipementId);
 
             equipementInstalleRepository.save(e);
+            logger.info("ei created: | ");
         }
 
         logger.info("Site successfully created: "+site.toString());
@@ -190,6 +191,37 @@ public class GestionSiteImpl implements GestionSite{
     @Override
     public List<Site> findAllSites() {
         return siteRepository.findAll();
+    }
+
+    @Override
+    public List<EquipementInstalle> installEquipement(int siteId, List<Integer> equipementsId, List<Date> datesInstall) {
+
+        List<EquipementInstalle> list = new ArrayList<>();
+
+        int indice = 0;
+        for (int id:equipementsId) {
+
+            EquipementInstalle equipementInstalle = new EquipementInstalle();
+
+            try {
+                logger.info("id equipement a installer : "+id);
+                Equipement equipement = service_equipement.getEquipementByID(id);
+
+                equipementInstalle.setSite(siteRepository.findById(siteId).get());
+                equipementInstalle.setDate_installation(datesInstall.get(indice));
+                equipementInstalle.setEquipement(equipement);
+
+            } catch (ChangeSetPersister.NotFoundException e) {
+                throw new RuntimeException(e);
+            }
+
+            equipementInstalleRepository.save(equipementInstalle);
+            list.add(equipementInstalle);
+
+            indice++;
+        }
+
+        return list;
     }
 
 

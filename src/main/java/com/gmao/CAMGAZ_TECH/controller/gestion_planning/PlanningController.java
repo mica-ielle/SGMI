@@ -3,6 +3,7 @@ package com.gmao.CAMGAZ_TECH.controller.gestion_planning;
 import com.gmao.CAMGAZ_TECH.DTO.RequetCreateFiche;
 import com.gmao.CAMGAZ_TECH.DTO.RequetCreateTachePlanifie;
 import com.gmao.CAMGAZ_TECH.DTO.RequetGetPlanning;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.FicheIntervention;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.TachePlanifie;
@@ -72,6 +73,14 @@ public class PlanningController {
         return service.valideTachePlanifie(tachePlanifieId);
     }
 
+    @DeleteMapping("/delete/{tachePlanifieId}")
+    public boolean delete(@PathVariable int tachePlanifieId)
+    {
+        return service.deleteTachePlanifie(tachePlanifieId);
+    }
+
+
+
     @PostMapping("/ficheIntervention")
     public FicheIntervention createFiche(@RequestBody RequetCreateFiche requetCreateFiche)
     {
@@ -79,10 +88,32 @@ public class PlanningController {
         return service.createFicheIntervention(requetCreateFiche.getFicheIntervention(), requetCreateFiche.getEquipementId(), requetCreateFiche.getPieceList());
     }
 
-    @DeleteMapping("/delete/{tachePlanifieId}")
-    public boolean delete(@PathVariable int tachePlanifieId)
+    @GetMapping("/fiches")
+    public List<FicheIntervention> getFiche()
     {
-        return service.deleteTachePlanifie(tachePlanifieId);
+        List<FicheIntervention> ficheInterventions = service.getFicheIntervention();
+        return ficheInterventions;
+    }
+
+    @GetMapping("/taches")
+    public List<TachePlanifie> getTachesPlanifie()
+    {
+        List<TachePlanifie> tachePlanifies = service.getTachesPlanifie();
+        return tachePlanifies;
+    }
+
+    @GetMapping("/taches/{tachePId}")
+    public TachePlanifie getTachesPlanifieById(@PathVariable int tachePId)
+    {
+        TachePlanifie tachePlanifie = service.getTachesPlanifieById(tachePId);
+        return tachePlanifie;
+    }
+    //updateTachesP    /taches/{id}
+
+    @PutMapping("/taches/{tachePlanifieId}")
+    public TachePlanifie updateTacheP(@PathVariable int tachePlanifieId, @RequestBody TachePlanifie tachePlanifie)
+    {
+        return service.updateTachePlanifie(tachePlanifieId, tachePlanifie);
     }
 
 }

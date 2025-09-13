@@ -1,7 +1,9 @@
 package com.gmao.CAMGAZ_TECH.controller.gestion_site;
 
 import com.gmao.CAMGAZ_TECH.DTO.RequetCreateSite;
+import com.gmao.CAMGAZ_TECH.DTO.RequetInstallEquipement;
 import com.gmao.CAMGAZ_TECH.DTO.RequetUpdateSite;
+import com.gmao.CAMGAZ_TECH.model.gestion_site.EquipementInstalle;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.Site;
 import com.gmao.CAMGAZ_TECH.service.gestion_site.GestionSiteImpl;
 import org.slf4j.Logger;
@@ -48,5 +50,12 @@ public class ControllerSite {
         return service.deleteSite(siteId);
     }
 
+
+    @PostMapping("/install-equipements")
+    public List<EquipementInstalle> installEquipement(@RequestBody RequetInstallEquipement rInstallEquipement)
+    {
+        logger.info(rInstallEquipement.toString());
+        return service.installEquipement(rInstallEquipement.getSiteId(), rInstallEquipement.getEquipementsId(), rInstallEquipement.getDatesInstall());
+    }
 
 }

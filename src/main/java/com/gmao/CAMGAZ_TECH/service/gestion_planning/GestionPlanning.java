@@ -33,10 +33,17 @@ public interface GestionPlanning {
 
     public FicheIntervention createFicheIntervention(FicheIntervention ficheIntervention, int equipementId, List<Integer> pieceList);
 
+    public List<FicheIntervention> getFicheIntervention();
+
 
     public boolean deleteTachePlanifie(int idTachePlanifie);
 
     //fiche historique
+
+    public List<TachePlanifie> getTachesPlanifie();
+    public TachePlanifie getTachesPlanifieById(int tachePId);
+    public TachePlanifie updateTachePlanifie(int tachePId, TachePlanifie tachePlanifie);
+
 
 
 }

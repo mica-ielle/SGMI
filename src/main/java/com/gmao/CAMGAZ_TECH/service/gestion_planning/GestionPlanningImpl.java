@@ -228,6 +228,21 @@ public class GestionPlanningImpl implements GestionPlanning{
     }
 
     @Override
+    public List<TachePlanifie> getTachesPlanifie() {
+        return tachePlanifieRepository.findAll();
+    }
+
+    @Override
+    public TachePlanifie getTachesPlanifieById(int tachePId) {
+        return tachePlanifieRepository.findById(tachePId).get();
+    }
+
+    @Override
+    public TachePlanifie updateTachePlanifie(int tachePId, TachePlanifie tachePlanifie) {
+        return null;
+    }
+
+    @Override
     public TachePlanifie valideTachePlanifie(int idTachePlanifie) {
 
         TachePlanifie t = tachePlanifieRepository.findById(idTachePlanifie).get();
@@ -265,6 +280,11 @@ public class GestionPlanningImpl implements GestionPlanning{
 
         logger.info("FicheIntervention successfully created: "+ficheIntervention.toString());
         return ficheInterventionRepository.save(ficheIntervention);
+    }
+
+    @Override
+    public List<FicheIntervention> getFicheIntervention() {
+        return ficheInterventionRepository.findAll();
     }
 
 }
