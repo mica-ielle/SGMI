@@ -58,4 +58,12 @@ public class ControllerSite {
         return service.installEquipement(rInstallEquipement.getSiteId(), rInstallEquipement.getEquipementsId(), rInstallEquipement.getDatesInstall());
     }
 
+
+    @GetMapping("/getByTp/{idTp}")
+    public Site getByTp(@PathVariable int idTp)
+    {
+        Site site = service.findSiteByTp(idTp);
+        return site;
+    }
+
 }

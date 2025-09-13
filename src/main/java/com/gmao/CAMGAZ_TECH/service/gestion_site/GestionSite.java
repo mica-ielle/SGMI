@@ -21,4 +21,8 @@ public interface GestionSite {
 
 
     public List<EquipementInstalle> installEquipement(int siteId, List<Integer> equipementsId, List<Date> datesInstall);
+
+    public Site findSiteByTp(int idTp);
+
+    public Site findSiteByEi(int idE);
 }

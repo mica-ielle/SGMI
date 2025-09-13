@@ -4,6 +4,7 @@ import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.EquipementInstalle;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.Site;
+import com.gmao.CAMGAZ_TECH.repository.gestion_planning.TachePlanifieRepository;
 import com.gmao.CAMGAZ_TECH.repository.gestion_site.EquipementInstalleRepository;
 import com.gmao.CAMGAZ_TECH.repository.gestion_site.SiteRepository;
 import com.gmao.CAMGAZ_TECH.service.gestion_equipement.GestionEquipementsImpl;
@@ -26,6 +27,7 @@ public class GestionSiteImpl implements GestionSite{
 
     private final SiteRepository siteRepository;
     private final EquipementInstalleRepository equipementInstalleRepository;
+    private final TachePlanifieRepository tachePlanifieRepository;
 
     @Autowired
     private GestionPlanningImpl gestionPlanning;
@@ -38,9 +40,10 @@ public class GestionSiteImpl implements GestionSite{
     @Autowired
     public GestionEquipementsImpl service_equipement;
     @Autowired
-    public GestionSiteImpl(SiteRepository siteRepository, EquipementInstalleRepository equipementInstalleRepository) {
+    public GestionSiteImpl(SiteRepository siteRepository, EquipementInstalleRepository equipementInstalleRepository, TachePlanifieRepository tachePlanifieRepository) {
         this.siteRepository = siteRepository;
         this.equipementInstalleRepository = equipementInstalleRepository;
+        this.tachePlanifieRepository = tachePlanifieRepository;
     }
 
 
@@ -225,4 +228,26 @@ public class GestionSiteImpl implements GestionSite{
     }
 
 
+    @Override
+    public Site findSiteByTp(int idTp) {
+        return siteRepository.findBytachePlanifies(tachePlanifieRepository.findById(idTp).get());
+    }
+
+    @Override
+    public Site findSiteByEi(int idE) {
+        Site rs = new Site();
+        try {
+            Equipement equipement = service_equipement.getEquipementByID(idE);
+            List<EquipementInstalle> equipementInstalles = equipementInstalleRepository.findByequipement(equipement);
+            for (EquipementInstalle e:equipementInstalles) {
+                Site site1 = siteRepository.findByequipementInstalles(e);
+                if (site1 != null){
+                    rs = site1;
+                }
+            }
+        } catch (ChangeSetPersister.NotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return rs;
+    }
 }
