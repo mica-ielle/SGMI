@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, MapPin, Phone, User } from 'lucide-react';
+import { Plus, Edit, Trash2, MapPin, Phone, User, Settings } from 'lucide-react';
+import { format } from 'date-fns';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -7,8 +8,10 @@ import { Input } from '../components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { EquipementInstallForm } from '../components/equipements/EquipementInstallForm';
 import { siteService } from '../services/siteService';
 import { equipementService } from '../services/equipementService';
+import { toast } from 'sonner@2.0.3';
 import type { Site, Equipement, RequetCreateSite, TypeEquipement } from '../types';
 
 const typeEquipementLabels: Record<TypeEquipement, string> = {
@@ -23,7 +26,9 @@ export const SitesPage = () => {
   const [equipements, setEquipements] = useState<Equipement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isInstallDialogOpen, setIsInstallDialogOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<Site | null>(null);
+  const [selectedSiteForInstall, setSelectedSiteForInstall] = useState<Site | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   // État du formulaire
@@ -31,11 +36,12 @@ export const SitesPage = () => {
     nom: '',
     ville: '',
     nom_contact: '',
-    tel_contact: ''
+    tel_contact: '',
+    dateCreation: format(new Date(), 'yyyy-MM-dd')
   });
 
   const [selectedEquipements, setSelectedEquipements] = useState<number[]>([]);
-  const [dateInstallation, setDateInstallation] = useState('');
+  const [equipementsDatesInstallation, setEquipementsDatesInstallation] = useState<{ [key: number]: string }>({});
 
   useEffect(() => {
     loadData();
@@ -67,7 +73,8 @@ export const SitesPage = () => {
         const createData: RequetCreateSite = {
           site: formData,
           equipementIdList: selectedEquipements,
-          dateInstall: dateInstallation
+          dateInstall: '', // Date par défaut (non utilisée)
+          dateMap: equipementsDatesInstallation
         };
         await siteService.create(createData);
       }
@@ -87,6 +94,7 @@ export const SitesPage = () => {
         await loadData();
       } catch (error) {
         console.error('Erreur lors de la suppression:', error);
+        toast.error('Erreur lors de la suppression');
       }
     }
   };
@@ -98,24 +106,53 @@ export const SitesPage = () => {
     setIsDialogOpen(true);
   };
 
+  const handleInstallSuccess = () => {
+    loadData();
+    toast.success('Équipements installés avec succès');
+  };
+
   const resetForm = () => {
     setFormData({
       nom: '',
       ville: '',
       nom_contact: '',
-      tel_contact: ''
+      tel_contact: '',
+      dateCreation: format(new Date(), 'yyyy-MM-dd')
     });
     setSelectedEquipements([]);
-    setDateInstallation('');
+    setEquipementsDatesInstallation({});
     setEditingSite(null);
   };
 
   const toggleEquipement = (equipementId: number) => {
-    setSelectedEquipements(prev => 
-      prev.includes(equipementId) 
+    setSelectedEquipements(prev => {
+      const newSelection = prev.includes(equipementId) 
         ? prev.filter(id => id !== equipementId)
-        : [...prev, equipementId]
-    );
+        : [...prev, equipementId];
+      
+      // Si on désélectionne un équipement, supprimer sa date d'installation
+      if (!newSelection.includes(equipementId)) {
+        setEquipementsDatesInstallation(prevDates => {
+          const { [equipementId]: removed, ...rest } = prevDates;
+          return rest;
+        });
+      } else {
+        // Ajouter la date actuelle par défaut
+        setEquipementsDatesInstallation(prevDates => ({
+          ...prevDates,
+          [equipementId]: format(new Date(), 'yyyy-MM-dd')
+        }));
+      }
+      
+      return newSelection;
+    });
+  };
+
+  const updateEquipementDate = (equipementId: number, date: string) => {
+    setEquipementsDatesInstallation(prev => ({
+      ...prev,
+      [equipementId]: date
+    }));
   };
 
   const filteredSites = sites.filter(site =>
@@ -207,45 +244,73 @@ export const SitesPage = () => {
                     onChange={(e) => setFormData(prev => ({ ...prev, tel_contact: e.target.value }))}
                   />
                 </div>
+                
+                {/* Date de création - modifiable seulement à la création */}
+                <div className="space-y-2">
+                  <Label htmlFor="dateCreation">Date de création *</Label>
+                  <Input
+                    id="dateCreation"
+                    type="date"
+                    value={formData.dateCreation || format(new Date(), 'yyyy-MM-dd')}
+                    onChange={(e) => setFormData(prev => ({ ...prev, dateCreation: e.target.value }))}
+                    disabled={!!editingSite}
+                    className={editingSite ? 'bg-gray-100 cursor-not-allowed' : ''}
+                    required
+                  />
+                  {editingSite && (
+                    <p className="text-sm text-gray-500">
+                      La date de création ne peut pas être modifiée après la création du site.
+                    </p>
+                  )}
+                </div>
               </div>
 
               {!editingSite && (
                 <>
-                  <div className="space-y-2">
-                    <Label htmlFor="dateInstallation">Date d'installation</Label>
-                    <Input
-                      id="dateInstallation"
-                      type="date"
-                      value={dateInstallation}
-                      onChange={(e) => setDateInstallation(e.target.value)}
-                    />
-                  </div>
-
                   {/* Sélection des équipements */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Équipements à installer</h3>
-                    <div className="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-4">
+                    <div className="space-y-3 max-h-80 overflow-y-auto border rounded-lg p-4">
                       {equipements.map((equipement) => (
-                        <div key={equipement.id_equipement} className="flex items-center space-x-3">
-                          <input
-                            type="checkbox"
-                            id={`eq-${equipement.id_equipement}`}
-                            checked={selectedEquipements.includes(equipement.id_equipement!)}
-                            onChange={() => toggleEquipement(equipement.id_equipement!)}
-                            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                          />
-                          <label 
-                            htmlFor={`eq-${equipement.id_equipement}`}
-                            className="flex-1 flex items-center justify-between cursor-pointer"
-                          >
-                            <div>
-                              <span className="font-medium">{equipement.nom}</span>
-                              <span className="text-gray-500 ml-2">({equipement.reference})</span>
+                        <div key={equipement.id_equipement} className="space-y-3 p-3 border rounded-lg bg-gray-50">
+                          <div className="flex items-center space-x-3">
+                            <input
+                              type="checkbox"
+                              id={`eq-${equipement.id_equipement}`}
+                              checked={selectedEquipements.includes(equipement.id_equipement!)}
+                              onChange={() => toggleEquipement(equipement.id_equipement!)}
+                              className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                            />
+                            <label 
+                              htmlFor={`eq-${equipement.id_equipement}`}
+                              className="flex-1 flex items-center justify-between cursor-pointer"
+                            >
+                              <div>
+                                <span className="font-medium">{equipement.nom}</span>
+                                <span className="text-gray-500 ml-2">({equipement.reference})</span>
+                              </div>
+                              <Badge variant="secondary">
+                                {typeEquipementLabels[equipement.type]}
+                              </Badge>
+                            </label>
+                          </div>
+                          
+                          {/* Date d'installation spécifique à cet équipement */}
+                          {selectedEquipements.includes(equipement.id_equipement!) && (
+                            <div className="ml-7 space-y-2">
+                              <Label htmlFor={`date-${equipement.id_equipement}`} className="text-sm">
+                                Date d'installation de cet équipement
+                              </Label>
+                              <Input
+                                id={`date-${equipement.id_equipement}`}
+                                type="date"
+                                value={equipementsDatesInstallation[equipement.id_equipement!] || format(new Date(), 'yyyy-MM-dd')}
+                                onChange={(e) => updateEquipementDate(equipement.id_equipement!, e.target.value)}
+                                className="bg-white"
+                                required
+                              />
                             </div>
-                            <Badge variant="secondary">
-                              {typeEquipementLabels[equipement.type]}
-                            </Badge>
-                          </label>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -284,6 +349,12 @@ export const SitesPage = () => {
                     {site.ville}
                   </p>
                   
+                  {site.dateCreation && (
+                    <p className="text-sm text-gray-500">
+                      Créé le: {new Date(site.dateCreation).toLocaleDateString('fr-FR')}
+                    </p>
+                  )}
+                  
                   {site.nom_contact && (
                     <p className="text-sm text-gray-500 flex items-center">
                       <User className="w-4 h-4 mr-1" />
@@ -299,6 +370,18 @@ export const SitesPage = () => {
                 </div>
                 
                 <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedSiteForInstall(site);
+                      setIsInstallDialogOpen(true);
+                    }}
+                    className="text-purple-600 hover:text-purple-700"
+                    title="Installer des équipements"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -374,6 +457,16 @@ export const SitesPage = () => {
           </Card>
         )}
       </div>
+
+      {/* Equipment Installation Dialog */}
+      {selectedSiteForInstall && (
+        <EquipementInstallForm
+          open={isInstallDialogOpen}
+          onOpenChange={setIsInstallDialogOpen}
+          site={selectedSiteForInstall}
+          onSuccess={handleInstallSuccess}
+        />
+      )}
     </div>
   );
 };

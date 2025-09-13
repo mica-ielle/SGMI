@@ -67,8 +67,14 @@ export const LoginForm = () => {
       </div>
 
       {/* Section droite avec formulaire */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
-        <Card className="w-full max-w-md shadow-xl border-0">
+      <div className="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 relative">
+        {/* Fond décoratif */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200/30 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl"></div>
+        </div>
+        
+        <Card className="w-full max-w-md shadow-2xl border-0 bg-white/80 backdrop-blur-sm relative z-10">
           <CardHeader className="space-y-6 pb-8">
             <div className="text-center space-y-2">
               <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl mx-auto flex items-center justify-center relative overflow-hidden">
@@ -91,7 +97,7 @@ export const LoginForm = () => {
                     placeholder="Votre identifiant"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="pl-10 bg-gray-50"
+                    className="pl-10 bg-white/70 backdrop-blur-sm border-gray-200/50"
                     required
                   />
                 </div>
@@ -107,7 +113,7 @@ export const LoginForm = () => {
                     placeholder="Votre mot de passe"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 bg-gray-50"
+                    className="pl-10 pr-10 bg-white/70 backdrop-blur-sm border-gray-200/50"
                     required
                   />
                   <button

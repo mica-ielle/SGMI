@@ -32,7 +32,7 @@ export const DemoModeIndicator = () => {
       {apiStatus === 'demo' ? (
         <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 shadow-lg">
           <WifiOff className="w-3 h-3 mr-1" />
-          Mode Démo - API non connectée
+          Hors Réseau - API non connectée
         </Badge>
       ) : (
         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 shadow-lg">

@@ -11,6 +11,10 @@ import { StocksPage } from './pages/StocksPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { Toaster } from './components/ui/sonner';
 
+import ErrorBoundary from './components/ErrorBoundary';
+
+
+
 function AppContent() {
   const { user, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -50,12 +54,16 @@ function AppContent() {
   };
 
   return (
-    <>
-      <Layout activeTab={activeTab} onTabChange={setActiveTab}>
-        {renderActiveComponent()}
-      </Layout>
-      <DemoModeIndicator />
-    </>
+    <ErrorBoundary>
+          <>
+            <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+              {renderActiveComponent()}
+            </Layout>
+            <DemoModeIndicator />
+          </>
+    </ErrorBoundary>
+
+
   );
 }
 
