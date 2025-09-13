@@ -87,6 +87,22 @@ export class PlanningService {
     }
   }
 
+
+  async telechargement(ficheId : number): Promise<void> {
+    try {
+    
+      const pdfUrl = `http://localhost:8491/download-pdf/${ficheId}`;
+      
+      // Ouvrir dans un nouvel onglet
+      window.open(pdfUrl, '_blank');
+      
+    } catch (error) {
+      console.error(`[CAMGAZ-TECH] Erreur lors de l'ouverture du PDF:`, error);
+      throw new Error('Impossible d\'ouvrir le PDF. Vérifiez que l\'API est accessible.');
+    }
+  }
+
+
   async downloadFicheInterventionPDF(ficheId: number): Promise<void> {
     try {
       // Effectuer l'appel API pour télécharger le PDF

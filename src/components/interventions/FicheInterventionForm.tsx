@@ -1,23 +1,38 @@
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Calendar } from '../ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Badge } from '../ui/badge';
-import { Separator } from '../ui/separator';
-import { ScrollArea } from '../ui/scroll-area';
-import { EnhancedForm, FormSection } from '../ui/enhanced-form';
-import { 
-  CalendarIcon, 
-  FileText, 
-  User, 
-  Package, 
-  AlertTriangle, 
-  CheckCircle, 
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Calendar } from "../ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../ui/popover";
+import { Badge } from "../ui/badge";
+import { Separator } from "../ui/separator";
+import { ScrollArea } from "../ui/scroll-area";
+import { EnhancedForm, FormSection } from "../ui/enhanced-form";
+import {
+  CalendarIcon,
+  FileText,
+  User,
+  Package,
+  AlertTriangle,
+  CheckCircle,
   Clock,
   Euro,
   Plus,
@@ -27,14 +42,23 @@ import {
   Download,
   MapPin,
   Settings,
-  ChevronDown
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { toast } from 'sonner@2.0.3';
-import { siteService } from '../../services/siteService';
-import type { FicheIntervention, TypeIntervention, Resultat, Equipement, Piece, Site, EquipementInstalle, RequetCreateFiche } from '../../types';
-import { planningService } from '../../services/planningService';
+  ChevronDown,
+} from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { toast } from "sonner@2.0.3";
+import { siteService } from "../../services/siteService";
+import type {
+  FicheIntervention,
+  TypeIntervention,
+  Resultat,
+  Equipement,
+  Piece,
+  Site,
+  EquipementInstalle,
+  RequetCreateFiche,
+} from "../../types";
+import { planningService } from "../../services/planningService";
 
 interface FicheInterventionFormProps {
   open: boolean;
@@ -60,41 +84,58 @@ interface CoutForm {
   total: number;
 }
 
-export const FicheInterventionForm = ({ 
-  open, 
-  onOpenChange, 
-  equipement, 
+export const FicheInterventionForm = ({
+  open,
+  onOpenChange,
+  equipement,
   site,
   onSuccess,
-  initialData 
+  initialData,
 }: FicheInterventionFormProps) => {
   const [formData, setFormData] = useState<FicheIntervention>({
-    type: 'MAINTENANCE_PLANIFIEE',
-    dateHeureIntervention: format(new Date(), 'yyyy-MM-dd\'T\'HH:mm'),
-    descriptionIntervention: '',
+    type: "MAINTENANCE_PLANIFIEE",
+    dateHeureIntervention: format(
+      new Date(),
+      "yyyy-MM-dd'T'HH:mm",
+    ),
+    descriptionIntervention: "",
     coutTotal: 0,
     piecesRemplacees: [],
-    nomsIntervenants: [''],
-    piecesJointes: []
+    nomsIntervenants: [""],
+    piecesJointes: [],
   });
 
-  const [piecesForm, setPiecesForm] = useState<PieceRemplaceeForm[]>([]);
-  const [intervenantsForm, setIntervenantsForm] = useState<string[]>(['']);
+  const [piecesForm, setPiecesForm] = useState<
+    PieceRemplaceeForm[]
+  >([]);
+  const [intervenantsForm, setIntervenantsForm] = useState<
+    string[]
+  >([""]);
   const [coutForm, setCoutForm] = useState<CoutForm>({
     mainOeuvre: 0,
     pieces: 0,
     autresFrais: 0,
-    total: 0
+    total: 0,
   });
-  const [numeroSerie, setNumeroSerie] = useState<string>('');
+  const [numeroSerie, setNumeroSerie] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  
+
   // Nouveaux états pour la sélection site/équipement
   const [sites, setSites] = useState<Site[]>([]);
-  const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
-  const [selectedEquipementInstalle, setSelectedEquipementInstalle] = useState<EquipementInstalle | null>(null);
-  const [equipementsDisponibles, setEquipementsDisponibles] = useState<EquipementInstalle[]>([]);
+  const [selectedSiteId, setSelectedSiteId] = useState<
+    number | null
+  >(null);
+  const [
+    selectedEquipementInstalle,
+    setSelectedEquipementInstalle,
+  ] = useState<EquipementInstalle | null>(null);
+  const [equipementsDisponibles, setEquipementsDisponibles] =
+    useState<EquipementInstalle[]>([]);
+  
+  // États pour la gestion des pièces de l'équipement
+  const [piecesDisponibles, setPiecesDisponibles] = useState<Piece[]>([]);
+  const [selectedPieces, setSelectedPieces] = useState<Set<number>>(new Set());
 
   // Charger les sites au montage du composant
   useEffect(() => {
@@ -103,7 +144,10 @@ export const FicheInterventionForm = ({
         const sitesData = await siteService.getAll();
         setSites(sitesData);
       } catch (error) {
-        console.error('Erreur lors du chargement des sites:', error);
+        console.error(
+          "Erreur lors du chargement des sites:",
+          error,
+        );
       }
     };
 
@@ -115,22 +159,36 @@ export const FicheInterventionForm = ({
   // Gérer la sélection du site
   useEffect(() => {
     if (selectedSiteId) {
-      const selectedSite = sites.find(s => s.id_site === selectedSiteId);
+      const selectedSite = sites.find(
+        (s) => s.id_site === selectedSiteId,
+      );
       if (selectedSite?.equipementInstalles) {
-        setEquipementsDisponibles(selectedSite.equipementInstalles);
+        setEquipementsDisponibles(
+          selectedSite.equipementInstalles,
+        );
       } else {
         setEquipementsDisponibles([]);
       }
       // Reset de la sélection d'équipement quand on change de site
       setSelectedEquipementInstalle(null);
-      setNumeroSerie('');
+      setNumeroSerie("");
     }
   }, [selectedSiteId, sites]);
 
   // Gérer la sélection de l'équipement
   useEffect(() => {
     if (selectedEquipementInstalle) {
-      setNumeroSerie(selectedEquipementInstalle.equipement.reference || '');
+      setNumeroSerie(
+        selectedEquipementInstalle.equipement.reference || "",
+      );
+      // Charger les pièces disponibles pour cet équipement
+      if (selectedEquipementInstalle.equipement.pieces) {
+        setPiecesDisponibles(selectedEquipementInstalle.equipement.pieces);
+      } else {
+        setPiecesDisponibles([]);
+      }
+      // Reset des pièces sélectionnées
+      setSelectedPieces(new Set());
     }
   }, [selectedEquipementInstalle]);
 
@@ -138,25 +196,31 @@ export const FicheInterventionForm = ({
     if (open) {
       if (initialData) {
         setFormData(initialData);
-        setIntervenantsForm(initialData.nomsIntervenants || ['']);
+        setIntervenantsForm(
+          initialData.nomsIntervenants || [""],
+        );
         setPiecesForm(
-          initialData.piecesRemplacees?.map(p => ({
+          initialData.piecesRemplacees?.map((p) => ({
             piece: p.piece,
             reference: p.reference,
             designation: p.nom,
             quantiteUtilisee: p.quantiteUtilisee,
-            prixUnitaire: p.prixUnitaire
-          })) || []
+            prixUnitaire: p.prixUnitaire,
+          })) || [],
         );
-        setNumeroSerie(initialData.equipement?.numeroSerie || '');
-        
+        setNumeroSerie(
+          initialData.equipement?.numeroSerie || "",
+        );
+
         // Si on a un équipement et un site en paramètre, les préselectionner
         if (site) {
           setSelectedSiteId(site.id_site!);
         }
         if (equipement && site?.equipementInstalles) {
           const equipInstalle = site.equipementInstalles.find(
-            ei => ei.equipement.id_equipement === equipement.id_equipement
+            (ei) =>
+              ei.equipement.id_equipement ===
+              equipement.id_equipement,
           );
           if (equipInstalle) {
             setSelectedEquipementInstalle(equipInstalle);
@@ -165,22 +229,25 @@ export const FicheInterventionForm = ({
       } else {
         // Reset form for new intervention
         setFormData({
-          type: 'MAINTENANCE_PLANIFIEE',
-          dateHeureIntervention: format(new Date(), 'yyyy-MM-dd\'T\'HH:mm'),
-          descriptionIntervention: '',
+          type: "MAINTENANCE_PLANIFIEE",
+          dateHeureIntervention: format(
+            new Date(),
+            "yyyy-MM-dd'T'HH:mm",
+          ),
+          descriptionIntervention: "",
           coutTotal: 0,
           piecesRemplacees: [],
-          nomsIntervenants: [''],
-          piecesJointes: []
+          nomsIntervenants: [""],
+          piecesJointes: [],
         });
-        setIntervenantsForm(['']);
+        setIntervenantsForm([""]);
         setPiecesForm([]);
-        setNumeroSerie('');
+        setNumeroSerie("");
         setCoutForm({
           mainOeuvre: 0,
           pieces: 0,
           autresFrais: 0,
-          total: 0
+          total: 0,
         });
         setSelectedSiteId(null);
         setSelectedEquipementInstalle(null);
@@ -190,10 +257,71 @@ export const FicheInterventionForm = ({
   }, [open, initialData, equipement, site]);
 
   const handleFieldChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const addPiece = () => {
+  const removePiece = (index: number) => {
+    setPiecesForm((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updatePiece = (
+    index: number,
+    field: string,
+    value: any,
+  ) => {
+    setPiecesForm((prev) =>
+      prev.map((piece, i) =>
+        i === index ? { ...piece, [field]: value } : piece,
+      ),
+    );
+  };
+
+  const addIntervenant = () => {
+    setIntervenantsForm((prev) => [...prev, ""]);
+  };
+
+  const removeIntervenant = (index: number) => {
+    if (intervenantsForm.length > 1) {
+      setIntervenantsForm((prev) =>
+        prev.filter((_, i) => i !== index),
+      );
+    }
+  };
+
+  const updateIntervenant = (index: number, value: string) => {
+    setIntervenantsForm((prev) =>
+      prev.map((intervenant, i) =>
+        i === index ? value : intervenant,
+      ),
+    );
+  };
+
+  const handlePieceSelection = (pieceId: number, selected: boolean) => {
+    const newSelectedPieces = new Set(selectedPieces);
+    
+    if (selected) {
+      newSelectedPieces.add(pieceId);
+      // Ajouter la pièce au formulaire
+      const piece = piecesDisponibles.find(p => p.id_piece === pieceId);
+      if (piece) {
+        setPiecesForm(prev => [...prev, {
+          piece: piece,
+          reference: piece.reference,
+          designation: piece.nom,
+          quantiteUtilisee: 1,
+          prixUnitaire: 0
+        }]);
+      }
+    } else {
+      newSelectedPieces.delete(pieceId);
+      // Retirer la pièce du formulaire
+      setPiecesForm(prev => prev.filter(pf => pf.piece?.id_piece !== pieceId));
+    }
+    
+    setSelectedPieces(newSelectedPieces);
+  };
+
+  const addCustomPiece = () => {
     setPiecesForm(prev => [...prev, {
       reference: '',
       designation: '',
@@ -202,65 +330,58 @@ export const FicheInterventionForm = ({
     }]);
   };
 
-  const removePiece = (index: number) => {
-    setPiecesForm(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const updatePiece = (index: number, field: string, value: any) => {
-    setPiecesForm(prev => prev.map((piece, i) => 
-      i === index ? { ...piece, [field]: value } : piece
-    ));
-  };
-
-  const addIntervenant = () => {
-    setIntervenantsForm(prev => [...prev, '']);
-  };
-
-  const removeIntervenant = (index: number) => {
-    if (intervenantsForm.length > 1) {
-      setIntervenantsForm(prev => prev.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateIntervenant = (index: number, value: string) => {
-    setIntervenantsForm(prev => prev.map((intervenant, i) => 
-      i === index ? value : intervenant
-    ));
-  };
+const addPiece = addCustomPiece;
 
   const calculatePiecesTotal = () => {
-    return piecesForm.reduce((total, piece) => 
-      total + (piece.quantiteUtilisee * (piece.prixUnitaire || 0)), 0
+    return piecesForm.reduce(
+      (total, piece) =>
+        total +
+        piece.quantiteUtilisee * (piece.prixUnitaire || 0),
+      0,
     );
   };
 
   const calculateTotalCost = () => {
     const piecesTotal = calculatePiecesTotal();
-    return coutForm.mainOeuvre + piecesTotal + coutForm.autresFrais;
+    return (
+      coutForm.mainOeuvre + piecesTotal + coutForm.autresFrais
+    );
   };
 
   // Mettre à jour automatiquement le total des coûts
   useEffect(() => {
     const piecesTotal = calculatePiecesTotal();
-    const total = coutForm.mainOeuvre + piecesTotal + coutForm.autresFrais;
-    setCoutForm(prev => ({ ...prev, pieces: piecesTotal, total }));
+    const total =
+      coutForm.mainOeuvre + piecesTotal + coutForm.autresFrais;
+    setCoutForm((prev) => ({
+      ...prev,
+      pieces: piecesTotal,
+      total,
+    }));
   }, [piecesForm, coutForm.mainOeuvre, coutForm.autresFrais]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = event.target.files;
     if (!files) return;
 
     setUploading(true);
     try {
       // Simulate file upload - replace with real implementation
-      const uploadedFiles = Array.from(files).map(file => file.name);
-      setFormData(prev => ({
+      const uploadedFiles = Array.from(files).map(
+        (file) => file.name,
+      );
+      setFormData((prev) => ({
         ...prev,
-        piecesJointes: [...(prev.piecesJointes || []), ...uploadedFiles]
+        piecesJointes: [
+          ...(prev.piecesJointes || []),
+          ...uploadedFiles,
+        ],
       }));
       toast.success(`${files.length} fichier(s) ajouté(s)`);
     } catch (error) {
-      toast.error('Erreur lors du téléchargement');
+      toast.error("Erreur lors du téléchargement");
     } finally {
       setUploading(false);
     }
@@ -271,13 +392,17 @@ export const FicheInterventionForm = ({
       setLoading(true);
 
       // Validation pour défaillance
-      if (formData.type === 'DEFAILLANCE') {
+      if (formData.type === "DEFAILLANCE") {
         if (!formData.problemeRencontre?.trim()) {
-          toast.error('Le problème rencontré est obligatoire pour une défaillance');
+          toast.error(
+            "Le problème rencontré est obligatoire pour une défaillance",
+          );
           return;
         }
         if (!formData.cause?.trim()) {
-          toast.error('La cause identifiée est obligatoire pour une défaillance');
+          toast.error(
+            "La cause identifiée est obligatoire pour une défaillance",
+          );
           return;
         }
       }
@@ -285,43 +410,50 @@ export const FicheInterventionForm = ({
       const finalData: FicheIntervention = {
         ...formData,
         coutTotal: calculateTotalCost(),
-        nomsIntervenants: intervenantsForm.filter(name => name.trim()),
-        piecesRemplacees: piecesForm.filter(piece => piece.designation.trim()).map(piece => ({
-          piece: piece.piece,
-          reference: piece.reference,
-          nom: piece.designation,
-          quantiteUtilisee: piece.quantiteUtilisee,
-          prixUnitaire: piece.prixUnitaire
-        })),
-        equipement: selectedEquipementInstalle ? {
-          ...selectedEquipementInstalle.equipement,
-          numeroSerie: numeroSerie || selectedEquipementInstalle.equipement.reference
-        } : undefined
+        nomsIntervenants: intervenantsForm.filter((name) =>
+          name.trim(),
+        ),
+        piecesRemplacees: piecesForm
+          .filter((piece) => piece.designation.trim())
+          .map((piece) => ({
+            piece: piece.piece,
+            reference: piece.reference,
+            nom: piece.designation,
+            quantiteUtilisee: piece.quantiteUtilisee,
+            prixUnitaire: piece.prixUnitaire,
+          })),
+        equipement: selectedEquipementInstalle
+          ? {
+              ...selectedEquipementInstalle.equipement,
+              numeroSerie:
+                numeroSerie ||
+                selectedEquipementInstalle.equipement.reference,
+            }
+          : undefined,
       };
 
-
-      
-    
       const piece = [];
 
-      for (const p of finalData.piecesRemplacees){
+      for (const p of finalData.piecesRemplacees) {
         piece.push(p.piece?.id_piece);
       }
-            
 
-      const creeFiche:RequetCreateFiche = {ficheIntervention:finalData, equipementId:finalData.equipement?.id_equipement, pieceList:piece};
-
+      const creeFiche: RequetCreateFiche = {
+        ficheIntervention: finalData,
+        equipementId: finalData.equipement?.id_equipement,
+        pieceList: piece,
+      };
 
       // TODO: Replace with real API call
-      
+
       await planningService.createFicheIntervention(creeFiche);
-      console.log('Submitting fiche intervention:', finalData);
-      
-      toast.success('Fiche d\'intervention créée avec succès');
+      console.log("Submitting fiche intervention:", finalData);
+
+      toast.success("Fiche d'intervention créée avec succès");
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      toast.error('Erreur lors de la création de la fiche');
+      toast.error("Erreur lors de la création de la fiche");
     } finally {
       setLoading(false);
     }
@@ -329,19 +461,27 @@ export const FicheInterventionForm = ({
 
   const handleDownloadPDF = () => {
     // TODO: Generate and download PDF
-    toast.info('Génération du PDF en cours...');
+    toast.info("Génération du PDF en cours...");
   };
 
   const getTypeIcon = (type: TypeIntervention) => {
-    return type === 'MAINTENANCE_PLANIFIEE' ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />;
+    return type === "MAINTENANCE_PLANIFIEE" ? (
+      <CheckCircle className="w-4 h-4" />
+    ) : (
+      <AlertTriangle className="w-4 h-4" />
+    );
   };
 
   const getResultatColor = (resultat: Resultat) => {
     switch (resultat) {
-      case 'OK': return 'bg-green-100 text-green-700 border-green-200';
-      case 'REPARÉ': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'SUIVI_NÉCESSAIRE': return 'bg-orange-100 text-orange-700 border-orange-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      case "OK":
+        return "bg-green-100 text-green-700 border-green-200";
+      case "REPARÉ":
+        return "bg-blue-100 text-blue-700 border-blue-200";
+      case "SUIVI_NÉCESSAIRE":
+        return "bg-orange-100 text-orange-700 border-orange-200";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-200";
     }
   };
 
@@ -351,22 +491,32 @@ export const FicheInterventionForm = ({
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            {initialData ? 'Modifier la fiche d\'intervention' : 'Nouvelle fiche d\'intervention'}
+            {initialData
+              ? "Modifier la fiche d'intervention"
+              : "Nouvelle fiche d'intervention"}
           </DialogTitle>
           {selectedEquipementInstalle && (
             <p className="text-muted-foreground">
-              Équipement: <span className="font-medium">{selectedEquipementInstalle.equipement.nom}</span> ({selectedEquipementInstalle.equipement.reference})
+              Équipement:{" "}
+              <span className="font-medium">
+                {selectedEquipementInstalle.equipement.nom}
+              </span>{" "}
+              ({selectedEquipementInstalle.equipement.reference}
+              )
             </p>
           )}
         </DialogHeader>
 
         <Separator />
 
-        <div className="flex-1 overflow-auto p-6" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+        <div
+          className="flex-1 overflow-auto p-6"
+          style={{ maxHeight: "calc(90vh - 200px)" }}
+        >
           <div className="space-y-6">
             {/* Identification de l'équipement */}
-            <FormSection 
-              title="Identification de l'équipement" 
+            <FormSection
+              title="Identification de l'équipement"
               description="Informations sur l'équipement concerné"
               icon={<Package className="w-4 h-4" />}
             >
@@ -374,8 +524,10 @@ export const FicheInterventionForm = ({
                 <div>
                   <Label>Site *</Label>
                   <Select
-                    value={selectedSiteId?.toString() || ''}
-                    onValueChange={(value) => setSelectedSiteId(parseInt(value))}
+                    value={selectedSiteId?.toString() || ""}
+                    onValueChange={(value) =>
+                      setSelectedSiteId(parseInt(value))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner un site" />
@@ -383,7 +535,10 @@ export const FicheInterventionForm = ({
                     </SelectTrigger>
                     <SelectContent>
                       {sites.map((site) => (
-                        <SelectItem key={site.id_site} value={site.id_site!.toString()}>
+                        <SelectItem
+                          key={site.id_site}
+                          value={site.id_site!.toString()}
+                        >
                           <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4" />
                             {site.nom} - {site.ville}
@@ -393,16 +548,24 @@ export const FicheInterventionForm = ({
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <Label>Équipement concerné *</Label>
                   <Select
-                    value={selectedEquipementInstalle?.id_equipementInstalle?.toString() || ''}
+                    value={
+                      selectedEquipementInstalle?.id_equipementInstalle?.toString() ||
+                      ""
+                    }
                     onValueChange={(value) => {
-                      const equipInstalle = equipementsDisponibles.find(
-                        eq => eq.id_equipementInstalle?.toString() === value
+                      const equipInstalle =
+                        equipementsDisponibles.find(
+                          (eq) =>
+                            eq.id_equipementInstalle?.toString() ===
+                            value,
+                        );
+                      setSelectedEquipementInstalle(
+                        equipInstalle || null,
                       );
-                      setSelectedEquipementInstalle(equipInstalle || null);
                     }}
                     disabled={!selectedSiteId}
                   >
@@ -411,17 +574,26 @@ export const FicheInterventionForm = ({
                       <ChevronDown className="w-4 h-4" />
                     </SelectTrigger>
                     <SelectContent>
-                      {equipementsDisponibles.map((equipInstalle) => (
-                        <SelectItem 
-                          key={equipInstalle.id_equipementInstalle} 
-                          value={equipInstalle.id_equipementInstalle!.toString()}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Settings className="w-4 h-4" />
-                            {equipInstalle.equipement.nom} ({equipInstalle.equipement.reference})
-                          </div>
-                        </SelectItem>
-                      ))}
+                      {equipementsDisponibles.map(
+                        (equipInstalle) => (
+                          <SelectItem
+                            key={
+                              equipInstalle.id_equipementInstalle
+                            }
+                            value={equipInstalle.id_equipementInstalle!.toString()}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Settings className="w-4 h-4" />
+                              {equipInstalle.equipement.nom} (
+                              {
+                                equipInstalle.equipement
+                                  .reference
+                              }
+                              )
+                            </div>
+                          </SelectItem>
+                        ),
+                      )}
                     </SelectContent>
                   </Select>
                   {!selectedSiteId && (
@@ -437,7 +609,10 @@ export const FicheInterventionForm = ({
                   <div>
                     <Label>Type d'équipement</Label>
                     <Input
-                      value={selectedEquipementInstalle.equipement.type || 'Non spécifié'}
+                      value={
+                        selectedEquipementInstalle.equipement
+                          .type || "Non spécifié"
+                      }
                       disabled
                       className="bg-gray-50"
                     />
@@ -445,7 +620,10 @@ export const FicheInterventionForm = ({
                   <div>
                     <Label>Référence</Label>
                     <Input
-                      value={selectedEquipementInstalle.equipement.reference || 'Non spécifié'}
+                      value={
+                        selectedEquipementInstalle.equipement
+                          .reference || "Non spécifié"
+                      }
                       disabled
                       className="bg-gray-50"
                     />
@@ -457,19 +635,38 @@ export const FicheInterventionForm = ({
                 <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-medium">Modèle:</span>
-                    <span>{selectedEquipementInstalle.equipement.nom}</span>
-                    {selectedEquipementInstalle.equipement.fournisseur && (
+                    <span>
+                      {
+                        selectedEquipementInstalle.equipement
+                          .nom
+                      }
+                    </span>
+                    {selectedEquipementInstalle.equipement
+                      .fournisseur && (
                       <>
                         <span className="mx-2">•</span>
-                        <span className="font-medium">Fournisseur:</span>
-                        <span>{selectedEquipementInstalle.equipement.fournisseur}</span>
+                        <span className="font-medium">
+                          Fournisseur:
+                        </span>
+                        <span>
+                          {
+                            selectedEquipementInstalle
+                              .equipement.fournisseur
+                          }
+                        </span>
                       </>
                     )}
                     {selectedEquipementInstalle.date_installation && (
                       <>
                         <span className="mx-2">•</span>
-                        <span className="font-medium">Installé le:</span>
-                        <span>{new Date(selectedEquipementInstalle.date_installation).toLocaleDateString('fr-FR')}</span>
+                        <span className="font-medium">
+                          Installé le:
+                        </span>
+                        <span>
+                          {new Date(
+                            selectedEquipementInstalle.date_installation,
+                          ).toLocaleDateString("fr-FR")}
+                        </span>
                       </>
                     )}
                   </div>
@@ -478,8 +675,8 @@ export const FicheInterventionForm = ({
             </FormSection>
 
             {/* Informations générales */}
-            <FormSection 
-              title="Informations générales" 
+            <FormSection
+              title="Informations générales"
               description="Détails de base de l'intervention"
               icon={<FileText className="w-4 h-4" />}
             >
@@ -488,7 +685,12 @@ export const FicheInterventionForm = ({
                   <Label>Type d'intervention *</Label>
                   <Select
                     value={formData.type}
-                    onValueChange={(value) => handleFieldChange('type', value as TypeIntervention)}
+                    onValueChange={(value) =>
+                      handleFieldChange(
+                        "type",
+                        value as TypeIntervention,
+                      )
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -515,7 +717,12 @@ export const FicheInterventionForm = ({
                   <Input
                     type="datetime-local"
                     value={formData.dateHeureIntervention}
-                    onChange={(e) => handleFieldChange('dateHeureIntervention', e.target.value)}
+                    onChange={(e) =>
+                      handleFieldChange(
+                        "dateHeureIntervention",
+                        e.target.value,
+                      )
+                    }
                   />
                 </div>
 
@@ -523,15 +730,24 @@ export const FicheInterventionForm = ({
                   <Label>Résultat</Label>
                   <Select
                     value={formData.resultat}
-                    onValueChange={(value) => handleFieldChange('resultat', value as Resultat)}
+                    onValueChange={(value) =>
+                      handleFieldChange(
+                        "resultat",
+                        value as Resultat,
+                      )
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="OK">✅ OK</SelectItem>
-                      <SelectItem value="REPARÉ">🔧 Réparé</SelectItem>
-                      <SelectItem value="SUIVI_NÉCESSAIRE">⚠️ Suivi nécessaire</SelectItem>
+                      <SelectItem value="REPARÉ">
+                        🔧 Réparé
+                      </SelectItem>
+                      <SelectItem value="SUIVI_NÉCESSAIRE">
+                        ⚠️ Suivi nécessaire
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -539,8 +755,8 @@ export const FicheInterventionForm = ({
             </FormSection>
 
             {/* Description de l'intervention */}
-            <FormSection 
-              title="Description de l'intervention" 
+            <FormSection
+              title="Description de l'intervention"
               description="Détails des travaux effectués"
               icon={<FileText className="w-4 h-4" />}
             >
@@ -550,21 +766,34 @@ export const FicheInterventionForm = ({
                   <Textarea
                     placeholder="Décrivez l'intervention réalisée en détail..."
                     value={formData.descriptionIntervention}
-                    onChange={(e) => handleFieldChange('descriptionIntervention', e.target.value)}
+                    onChange={(e) =>
+                      handleFieldChange(
+                        "descriptionIntervention",
+                        e.target.value,
+                      )
+                    }
                     rows={3}
                   />
                 </div>
 
                 <div>
-                  <Label>Problème rencontré {formData.type === 'DEFAILLANCE' && '*'}</Label>
+                  <Label>
+                    Problème rencontré{" "}
+                    {formData.type === "DEFAILLANCE" && "*"}
+                  </Label>
                   <Textarea
                     placeholder="Décrivez le problème ou la panne..."
-                    value={formData.problemeRencontre || ''}
-                    onChange={(e) => handleFieldChange('problemeRencontre', e.target.value)}
+                    value={formData.problemeRencontre || ""}
+                    onChange={(e) =>
+                      handleFieldChange(
+                        "problemeRencontre",
+                        e.target.value,
+                      )
+                    }
                     rows={2}
-                    required={formData.type === 'DEFAILLANCE'}
+                    required={formData.type === "DEFAILLANCE"}
                   />
-                  {formData.type === 'DEFAILLANCE' && (
+                  {formData.type === "DEFAILLANCE" && (
                     <p className="text-xs text-muted-foreground mt-1">
                       Obligatoire pour une défaillance
                     </p>
@@ -572,15 +801,20 @@ export const FicheInterventionForm = ({
                 </div>
 
                 <div>
-                  <Label>Cause identifiée {formData.type === 'DEFAILLANCE' && '*'}</Label>
+                  <Label>
+                    Cause identifiée{" "}
+                    {formData.type === "DEFAILLANCE" && "*"}
+                  </Label>
                   <Textarea
                     placeholder="Cause du problème..."
-                    value={formData.cause || ''}
-                    onChange={(e) => handleFieldChange('cause', e.target.value)}
+                    value={formData.cause || ""}
+                    onChange={(e) =>
+                      handleFieldChange("cause", e.target.value)
+                    }
                     rows={2}
-                    required={formData.type === 'DEFAILLANCE'}
+                    required={formData.type === "DEFAILLANCE"}
                   />
-                  {formData.type === 'DEFAILLANCE' && (
+                  {formData.type === "DEFAILLANCE" && (
                     <p className="text-xs text-muted-foreground mt-1">
                       Obligatoire pour une défaillance
                     </p>
@@ -591,8 +825,13 @@ export const FicheInterventionForm = ({
                   <Label>Travaux effectués</Label>
                   <Textarea
                     placeholder="Détaillez les travaux réalisés..."
-                    value={formData.travauxEffectues || ''}
-                    onChange={(e) => handleFieldChange('travauxEffectues', e.target.value)}
+                    value={formData.travauxEffectues || ""}
+                    onChange={(e) =>
+                      handleFieldChange(
+                        "travauxEffectues",
+                        e.target.value,
+                      )
+                    }
                     rows={3}
                   />
                 </div>
@@ -601,8 +840,15 @@ export const FicheInterventionForm = ({
                   <Label>Commentaires additionnels</Label>
                   <Textarea
                     placeholder="Remarques, observations, recommandations..."
-                    value={formData.commentairesAdditionnels || ''}
-                    onChange={(e) => handleFieldChange('commentairesAdditionnels', e.target.value)}
+                    value={
+                      formData.commentairesAdditionnels || ""
+                    }
+                    onChange={(e) =>
+                      handleFieldChange(
+                        "commentairesAdditionnels",
+                        e.target.value,
+                      )
+                    }
                     rows={2}
                   />
                 </div>
@@ -610,18 +856,23 @@ export const FicheInterventionForm = ({
             </FormSection>
 
             {/* Intervenants */}
-            <FormSection 
-              title="Intervenants" 
+            <FormSection
+              title="Intervenants"
               description="Personnes ayant participé à l'intervention"
               icon={<User className="w-4 h-4" />}
             >
               <div className="space-y-3">
                 {intervenantsForm.map((intervenant, index) => (
-                  <div key={index} className="flex items-center gap-2">
+                  <div
+                    key={index}
+                    className="flex items-center gap-2"
+                  >
                     <Input
                       placeholder="Nom de l'intervenant"
                       value={intervenant}
-                      onChange={(e) => updateIntervenant(index, e.target.value)}
+                      onChange={(e) =>
+                        updateIntervenant(index, e.target.value)
+                      }
                       className="flex-1"
                     />
                     {intervenantsForm.length > 1 && (
@@ -635,7 +886,11 @@ export const FicheInterventionForm = ({
                     )}
                   </div>
                 ))}
-                <Button variant="outline" onClick={addIntervenant} className="w-full">
+                <Button
+                  variant="outline"
+                  onClick={addIntervenant}
+                  className="w-full"
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Ajouter un intervenant
                 </Button>
@@ -643,75 +898,137 @@ export const FicheInterventionForm = ({
             </FormSection>
 
             {/* Pièces remplacées */}
-            <FormSection 
-              title="Pièces remplacées" 
-              description="Liste des pièces utilisées pendant l'intervention"
+            <FormSection
+              title="Pièces remplacées"
+              description="Sélectionnez les pièces de l'équipement ou ajoutez des pièces personnalisées"
               icon={<Package className="w-4 h-4" />}
             >
-              <div className="space-y-4">
-                {piecesForm.map((piece, index) => (
-                  <div key={index} className="p-4 border rounded-lg bg-gray-50 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">Pièce #{index + 1}</h4>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removePiece(index)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <div>
-                        <Label className="text-sm">Référence *</Label>
-                        <Input
-                          placeholder="REF-001"
-                          value={piece.reference}
-                          onChange={(e) => updatePiece(index, 'reference', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm">Désignation *</Label>
-                        <Input
-                          placeholder="Désignation de la pièce"
-                          value={piece.designation}
-                          onChange={(e) => updatePiece(index, 'designation', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm">Quantité *</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={piece.quantiteUtilisee}
-                          onChange={(e) => updatePiece(index, 'quantiteUtilisee', parseInt(e.target.value) || 1)}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm">Prix unitaire (FCFA)</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={piece.prixUnitaire || ''}
-                          onChange={(e) => updatePiece(index, 'prixUnitaire', parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
+              <div className="space-y-6">
+                {/* Pièces disponibles pour l'équipement sélectionné */}
+                {selectedEquipementInstalle && piecesDisponibles.length > 0 && (
+                  <div>
+                    <Label className="text-base">Pièces de l'équipement {selectedEquipementInstalle.equipement.nom}</Label>
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto border rounded-lg p-3 bg-blue-50">
+                      {piecesDisponibles.map((piece) => (
+                        <div key={piece.id_piece} className="flex items-center space-x-3 p-2 bg-white rounded border">
+                          <input
+                            type="checkbox"
+                            id={`piece-${piece.id_piece}`}
+                            checked={selectedPieces.has(piece.id_piece!)}
+                            onChange={(e) => handlePieceSelection(piece.id_piece!, e.target.checked)}
+                            className="w-4 h-4 text-blue-600 rounded"
+                          />
+                          <label htmlFor={`piece-${piece.id_piece}`} className="flex-1 cursor-pointer">
+                            <div className="font-medium text-sm">{piece.nom}</div>
+                            <div className="text-xs text-muted-foreground">Réf: {piece.reference}</div>
+                          </label>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-                
-                <Button variant="outline" onClick={addPiece} className="w-full">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter une pièce
-                </Button>
+                )}
+
+                {/* Pièces sélectionnées et personnalisées */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base">Pièces utilisées</Label>
+                    <Button variant="outline" size="sm" onClick={addCustomPiece}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Pièce personnalisée
+                    </Button>
+                  </div>
+
+                  {piecesForm.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {selectedEquipementInstalle && piecesDisponibles.length > 0 
+                        ? "Sélectionnez des pièces ci-dessus ou ajoutez une pièce personnalisée"
+                        : "Aucun équipement sélectionné ou aucune pièce disponible"
+                      }
+                    </div>
+                  ) : (
+                    piecesForm.map((piece, index) => (
+                      <div key={index} className="p-4 border rounded-lg bg-gray-50 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium flex items-center gap-2">
+                            {piece.piece ? (
+                              <>
+                                <Package className="w-4 h-4 text-blue-600" />
+                                Pièce d'équipement #{index + 1}
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-4 h-4 text-orange-600" />
+                                Pièce personnalisée #{index + 1}
+                              </>
+                            )}
+                          </h4>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              // Si c'est une pièce de l'équipement, la décocher aussi
+                              if (piece.piece?.id_piece) {
+                                handlePieceSelection(piece.piece.id_piece, false);
+                              } else {
+                                removePiece(index);
+                              }
+                            }}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                          <div>
+                            <Label className="text-sm">Référence *</Label>
+                            <Input
+                              placeholder="REF-001"
+                              value={piece.reference}
+                              onChange={(e) => updatePiece(index, 'reference', e.target.value)}
+                              disabled={!!piece.piece} // Désactivé si c'est une pièce de l'équipement
+                              className={piece.piece ? 'bg-blue-50' : ''}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm">Désignation *</Label>
+                            <Input
+                              placeholder="Désignation de la pièce"
+                              value={piece.designation}
+                              onChange={(e) => updatePiece(index, 'designation', e.target.value)}
+                              disabled={!!piece.piece} // Désactivé si c'est une pièce de l'équipement
+                              className={piece.piece ? 'bg-blue-50' : ''}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm">Quantité *</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={piece.quantiteUtilisee}
+                              onChange={(e) => updatePiece(index, 'quantiteUtilisee', parseInt(e.target.value) || 1)}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm">Prix unitaire (FCFA)</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={piece.prixUnitaire || ''}
+                              onChange={(e) => updatePiece(index, 'prixUnitaire', parseFloat(e.target.value) || 0)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </FormSection>
 
             {/* Coût total de l'intervention */}
-            <FormSection 
-              title="Coût total de l'intervention" 
+            <FormSection
+              title="Coût total de l'intervention"
               description="Répartition des coûts (main-d'œuvre, pièces, autres frais)"
               icon={<Euro className="w-4 h-4" />}
             >
@@ -723,7 +1040,13 @@ export const FicheInterventionForm = ({
                     min="0"
                     step="0.01"
                     value={coutForm.mainOeuvre}
-                    onChange={(e) => setCoutForm(prev => ({ ...prev, mainOeuvre: parseFloat(e.target.value) || 0 }))}
+                    onChange={(e) =>
+                      setCoutForm((prev) => ({
+                        ...prev,
+                        mainOeuvre:
+                          parseFloat(e.target.value) || 0,
+                      }))
+                    }
                   />
                 </div>
                 <div>
@@ -745,36 +1068,49 @@ export const FicheInterventionForm = ({
                     min="0"
                     step="0.01"
                     value={coutForm.autresFrais}
-                    onChange={(e) => setCoutForm(prev => ({ ...prev, autresFrais: parseFloat(e.target.value) || 0 }))}
+                    onChange={(e) =>
+                      setCoutForm((prev) => ({
+                        ...prev,
+                        autresFrais:
+                          parseFloat(e.target.value) || 0,
+                      }))
+                    }
                   />
                 </div>
               </div>
-              
-                <div>
-                  <Label>Total (FCFA)</Label>
-                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    <div className="flex items-center justify-center">
-                      <Badge className="bg-purple-100 text-purple-700 text-lg px-3 py-1">
-                        {coutForm.total.toFixed(2)} FCFA
-                      </Badge>
-                    </div>
+
+              <div>
+                <Label>Total (FCFA)</Label>
+                <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center justify-center">
+                    <Badge className="bg-purple-100 text-purple-700 text-lg px-3 py-1">
+                      {coutForm.total.toFixed(2)} FCFA
+                    </Badge>
                   </div>
                 </div>
+              </div>
             </FormSection>
 
             {/* Pièces jointes */}
-            <FormSection 
-              title="Pièces jointes" 
+            <FormSection
+              title="Pièces jointes"
               description="Photos, documents, rapports liés à l'intervention"
               icon={<Paperclip className="w-4 h-4" />}
             >
               <div className="space-y-3">
                 <div>
-                  <Label htmlFor="file-upload" className="cursor-pointer">
+                  <Label
+                    htmlFor="file-upload"
+                    className="cursor-pointer"
+                  >
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors">
                       <Paperclip className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm font-medium">Cliquez pour ajouter des fichiers</p>
-                      <p className="text-xs text-muted-foreground">PNG, JPG, PDF jusqu'à 10MB</p>
+                      <p className="text-sm font-medium">
+                        Cliquez pour ajouter des fichiers
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        PNG, JPG, PDF jusqu'à 10MB
+                      </p>
                     </div>
                   </Label>
                   <Input
@@ -787,27 +1123,41 @@ export const FicheInterventionForm = ({
                   />
                 </div>
 
-                {formData.piecesJointes && formData.piecesJointes.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Fichiers ajoutés:</Label>
-                    {formData.piecesJointes.map((fichier, index) => (
-                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                        <Paperclip className="w-4 h-4" />
-                        <span className="text-sm">{fichier}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const newFiles = formData.piecesJointes!.filter((_, i) => i !== index);
-                            handleFieldChange('piecesJointes', newFiles);
-                          }}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {formData.piecesJointes &&
+                  formData.piecesJointes.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Fichiers ajoutés:</Label>
+                      {formData.piecesJointes.map(
+                        (fichier, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 p-2 bg-gray-50 rounded"
+                          >
+                            <Paperclip className="w-4 h-4" />
+                            <span className="text-sm">
+                              {fichier}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const newFiles =
+                                  formData.piecesJointes!.filter(
+                                    (_, i) => i !== index,
+                                  );
+                                handleFieldChange(
+                                  "piecesJointes",
+                                  newFiles,
+                                );
+                              }}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  )}
               </div>
             </FormSection>
           </div>
@@ -821,16 +1171,16 @@ export const FicheInterventionForm = ({
               * Champs obligatoires
             </div>
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={loading}
               >
                 Annuler
               </Button>
               {initialData && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handleDownloadPDF}
                   disabled={loading}
                 >
@@ -838,9 +1188,14 @@ export const FicheInterventionForm = ({
                   Télécharger PDF
                 </Button>
               )}
-              <Button 
+              <Button
                 onClick={handleSubmit}
-                disabled={loading || !formData.descriptionIntervention.trim() || !selectedSiteId || !selectedEquipementInstalle}
+                disabled={
+                  loading ||
+                  !formData.descriptionIntervention.trim() ||
+                  !selectedSiteId ||
+                  !selectedEquipementInstalle
+                }
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 {loading ? (
@@ -851,7 +1206,9 @@ export const FicheInterventionForm = ({
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    {initialData ? 'Mettre à jour' : 'Créer la fiche'}
+                    {initialData
+                      ? "Mettre à jour"
+                      : "Créer la fiche"}
                   </>
                 )}
               </Button>

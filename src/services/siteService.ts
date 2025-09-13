@@ -33,6 +33,17 @@ export class SiteService {
       return [];
     }
   }
+    async getByTp(tpId: number): Site {
+    try {
+      return await apiService.get<Site>(`${this.endpoint}/getByTp/${tpId}`);
+    } catch (error) {
+      console.error('Erreur lors de la récupération du site:', error);
+      /* if ((error as Error).message === 'MOCK_FALLBACK') {
+        return this.getMockSites();
+      } */
+      throw error;
+    }
+  }
 
   async update(siteId: number, updateData: RequetUpdateSite): Promise<Site> {
     try {

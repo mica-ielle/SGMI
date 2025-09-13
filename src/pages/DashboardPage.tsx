@@ -219,7 +219,7 @@ export const DashboardPage = () => {
         </Card>
 
         {/* Évolution des maintenances */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Évolution des maintenances</CardTitle>
           </CardHeader>
@@ -254,7 +254,7 @@ export const DashboardPage = () => {
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Alertes et prochaines maintenances */}
@@ -340,7 +340,7 @@ export const DashboardPage = () => {
       </div>
 
       {/* Statistiques détaillées */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Résumé mensuel des maintenances</CardTitle>
         </CardHeader>
@@ -357,7 +357,7 @@ export const DashboardPage = () => {
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 };

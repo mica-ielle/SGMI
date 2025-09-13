@@ -20,8 +20,10 @@ import type {
   StatutMaintenance, 
   StatutTache,
   TypeTachePlanifie,
-  FicheIntervention
+  FicheIntervention,
+  Site
 } from '../types';
+import { siteService } from '../services/siteService';
 
 const statutTacheLabels: Record<StatutTache, string> = {
   PLANIFIEE: 'Planifiée',
@@ -41,6 +43,8 @@ export const PlanningPage = () => {
   const [tachesPlannifiees, setTachesPlannifiees] = useState<TachePlanifie[]>([]);
   const [fichesIntervention, setFichesIntervention] = useState<FicheIntervention[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [resolvedSites, setResolvedSites] = useState(null);
+
   
   // États des dialogs
   const [isTacheDialogOpen, setIsTacheDialogOpen] = useState(false);
@@ -62,14 +66,30 @@ export const PlanningPage = () => {
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [planningData, tachesData, fichesData] = await Promise.all([
+      const [planningData, tachesData, fichesData, sitesData] = await Promise.all([
         planningService.getPlanning(),
         planningService.getAllTachesPlanifiees(),
-        planningService.getAllFichesIntervention()
+        planningService.getAllFichesIntervention(),
+        siteService.getAll()
       ]);
       setPlanningMaintenances(planningData);
       setTachesPlannifiees(tachesData);
       setFichesIntervention(fichesData);
+
+    // Construire un mapping des sites par ID de tâche
+    const sitesRésolus: Record<string, Site> = {};
+
+    tachesData.forEach((tache) => {
+      const site = sitesData.find((s) => s.id_site === tache.id_site);
+      if (site) {
+        sitesRésolus[tache.id_tachePlanifie] = site;
+      }
+    });
+
+    // Mettre à jour l’état des sites résolus
+    setResolvedSites(sitesRésolus);
+
+
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
       toast.error('Erreur lors du chargement du planning');
@@ -109,10 +129,7 @@ export const PlanningPage = () => {
   const handleMarkCompleted = async (tache: TachePlanifie) => {
     try {
       const updatedTache = { ...tache, statut: 'REALISEE' as StatutTache };
-      await planningService.updateTachePlanifie(tache.id_tachePlanifie!, {
-        tachePlanifie: updatedTache,
-        siteId: tache.site?.id_site || 0
-      });
+      await planningService.validerTache(tache.id_tachePlanifie!);
       await loadData();
       toast.success('Tâche marquée comme terminée');
       setIsDetailOpen(false);
@@ -147,7 +164,7 @@ export const PlanningPage = () => {
 
   const handleDownloadFichePDF = async (ficheId: number) => {
     try {
-      await planningService.downloadFicheInterventionPDF(ficheId);
+      await planningService.telechargement(ficheId);
       toast.success('Téléchargement du PDF commencé');
     } catch (error) {
       console.error('Erreur lors du téléchargement:', error);
@@ -157,7 +174,7 @@ export const PlanningPage = () => {
 
   const handleDownloadDefaillancePDF = async (ficheId: number) => {
     try {
-      await planningService.downloadDefaillancePDF(ficheId);
+      await planningService.telechargement(ficheId);
       toast.success('Téléchargement du PDF commencé');
     } catch (error) {
       console.error('Erreur lors du téléchargement:', error);
@@ -234,8 +251,12 @@ export const PlanningPage = () => {
   }
 
 
-
-
+  const sitesByTacheId = Object.fromEntries(
+    filteredTaches.map((tache) => [
+      tache.id_tachePlanifie,
+      siteService.getByTp(tache.id_tachePlanifie)
+    ])
+  )
 
 
   return (
@@ -261,13 +282,13 @@ export const PlanningPage = () => {
             Fiche d'intervention
           </Button>
           
-          <Button 
+         {/*  <Button 
             className="bg-red-600 hover:bg-red-700"
             onClick={() => setIsDefaillanceDialogOpen(true)}
           >
             <AlertTriangle className="w-4 h-4 mr-2" />
             Signaler défaillance
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -366,11 +387,18 @@ export const PlanningPage = () => {
           const urgency = getUrgency(tache);
           const urgencyBadge = getUrgencyBadge(urgency);
           
+          const site = sitesByTacheId[tache.id_tachePlanifie];
+        
+console.log('Site brut:', site);
+console.log('Type:', typeof site);
+console.log('Nom du site:', site?.nom);
+
+                          
           return (
             <DetailCard
               key={tache.id_tachePlanifie}
               title={tache.nom}
-              subtitle={`${typeTacheLabels[tache.type]} • ${tache.site ? `${tache.site.nom} - ${tache.site.ville}` : 'Site non défini'}`}
+              subtitle={`${typeTacheLabels[tache.type]} • ${site ? `${site.nom} - ${site.ville}` : 'Site non défini'}`}
               status={{
                 label: statutTacheLabels[tache.statut],
                 variant: 'outline'
@@ -606,7 +634,8 @@ export const PlanningPage = () => {
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm">Défaillance signalée</div>
                         <div className="text-xs text-muted-foreground">
-                          {format(new Date(defaillance.dateHeureIntervention), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                          {/* {format(new Date(defaillance.dateHeureIntervention), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                           */}
                         </div>
                         {defaillance.equipement && (
                           <div className="text-xs text-red-600 mt-1">

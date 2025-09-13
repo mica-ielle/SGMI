@@ -154,6 +154,15 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
     }
   };
 
+
+
+    const handleDate = (date: Date | undefined) => {
+    if (date) {
+      
+    }
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -289,22 +298,15 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
 
                 <div>
                   <Label>Date prévue *</Label>
-                  <Popover>
-                    <PopoverContent className="w-auto p-0">
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
-                      </Button>
-                    </PopoverTrigger>
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={handleDateChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  
+                    <Input
+                      type="date"
+                      value={selectedDate || format(new Date(), 'yyyy-MM-dd')}
+                      onChange={(e) => handleDateChange(e.target.value)}
+                      className="w-full border border-gray-300 rounded px-3 py-2"
+                      required
+                    />
+                  
                 </div>
                 
               </div>

@@ -46,7 +46,7 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
     nom: '',
     statut: 'PLANIFIEE',
     type: 'VISITE',
-    datePrevu: format(new Date(), 'yyyy-MM-dd')
+    datePrevu: format(new Date(), 'd MMMM yyyy', { locale: fr })
   });
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -81,7 +81,7 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
       nom: '',
       statut: 'PLANIFIEE',
       type: 'VISITE',
-      datePrevu: format(new Date(), 'yyyy-MM-dd')
+      datePrevu: format(new Date(), 'd MMMM yyyy', { locale: fr })
     });
     setSelectedDate(new Date());
   };
@@ -93,7 +93,7 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
-      setFormData(prev => ({ ...prev, datePrevu: format(date, 'yyyy-MM-dd') }));
+      setFormData(prev => ({ ...prev, datePrevu: format(date, 'd MMMM yyyy', { locale: fr }) }));
     }
   };
 
