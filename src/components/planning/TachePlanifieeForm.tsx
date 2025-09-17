@@ -5,16 +5,16 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Calendar } from '../ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
 import { EnhancedForm, FormSection } from '../ui/enhanced-form';
-import { CalendarIcon, User, MapPin, Clock, Save, AlertTriangle } from 'lucide-react';
-import { format } from 'date-fns';
+import { CalendarIcon, User, MapPin, Clock, Save, AlertTriangle, Plus, X } from 'lucide-react';
+import { format, addDays, addWeeks, addMonths, addYears, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ScrollArea } from '../ui/scroll-area';
 import { toast } from 'sonner@2.0.3';
-import type { TachePlanifie, TypeTachePlanifie, StatutTache, Site } from '../../types';
+import { FrequenceSelector } from '../forms/FrequenceSelector';
+import type { TachePlanifie, TypeTachePlanifie, StatutTache, Site, Planifier, Frequence } from '../../types';
 import { siteService } from '../../services/siteService';
 import { planningService } from '../../services/planningService';
 
@@ -38,6 +38,61 @@ const typeTacheLabels: Record<TypeTachePlanifie, string> = {
   PREVENTIF: 'Préventif'
 };
 
+// Fonction pour calculer la prochaine date de maintenance
+const calculerProchaineMaintenance = (dateDerniereIntervention: string, frequence: Frequence): string => {
+  if (!dateDerniereIntervention || !frequence) return '';
+  
+  try {
+    const dateBase = parseISO(dateDerniereIntervention);
+    
+    if (frequence.frequenceStandard) {
+      switch (frequence.frequenceStandard) {
+        case 'QUOTIDIENNE':
+          return format(addDays(dateBase, 1), 'yyyy-MM-dd');
+        case 'HEBDOMADAIRE':
+          return format(addWeeks(dateBase, 1), 'yyyy-MM-dd');
+        case 'MENSUELLE':
+          return format(addMonths(dateBase, 1), 'yyyy-MM-dd');
+        case 'TRIMESTRIELLE':
+          return format(addMonths(dateBase, 3), 'yyyy-MM-dd');
+        case 'SEMESTRIELLE':
+          return format(addMonths(dateBase, 6), 'yyyy-MM-dd');
+        case 'ANNUELLE':
+          return format(addYears(dateBase, 1), 'yyyy-MM-dd');
+        default:
+          return '';
+      }
+    }
+    
+    if (frequence.valeurPersonnalisee && frequence.unitePersonnalisee) {
+      const valeur = frequence.valeurPersonnalisee;
+      switch (frequence.unitePersonnalisee) {
+        case 'JOURS':
+          return format(addDays(dateBase, valeur), 'yyyy-MM-dd');
+        case 'SEMAINES':
+          return format(addWeeks(dateBase, valeur), 'yyyy-MM-dd');
+        case 'MOIS':
+          return format(addMonths(dateBase, valeur), 'yyyy-MM-dd');
+        case 'ANNEES':
+          return format(addYears(dateBase, valeur), 'yyyy-MM-dd');
+        default:
+          return '';
+      }
+    }
+    
+    if (frequence.heuresTotales) {
+      // Pour les heures, on estime une moyenne de 8h par jour
+      const jours = Math.ceil(frequence.heuresTotales / 8);
+      return format(addDays(dateBase, jours), 'yyyy-MM-dd');
+    }
+    
+    return '';
+  } catch (error) {
+    console.error('Erreur lors du calcul de la prochaine maintenance:', error);
+    return '';
+  }
+};
+
 export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData }: TachePlanifieeFormProps) => {
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,17 +102,34 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
     nom: '',
     statut: 'PLANIFIEE',
     type: 'VISITE',
-    datePrevu: format(new Date(), 'yyyy-MM-dd')
+    frequence: {},
+    planifiers: [],
+    dernierIntervention: []
   });
 
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedPlanifiers, setSelectedPlanifiers] = useState<Planifier[]>([]);
+
+  // Calculer la prochaine date pour l'aperçu général
+  const prochaineDate = selectedPlanifiers.length > 0 
+    ? calculerProchaineMaintenance(selectedPlanifiers[0].datePlanifie, formData.frequence || {})
+    : '';
 
   useEffect(() => {
     if (open) {
       loadSites();
       if (initialData) {
-        setFormData(initialData);
-        setSelectedDate(new Date(initialData.datePrevu));
+        setFormData({
+          ...initialData,
+          planifiers: initialData.planifiers || [],
+          dernierIntervention: initialData.dernierIntervention || []
+        });
+        
+        // Construire la liste des planifiers sélectionnés
+        const planifiersWithDates = (initialData.planifiers || []).map((planifier) => ({
+          ...planifier,
+          datePlanifie: planifier.datePlanifie || format(new Date(), 'yyyy-MM-dd')
+        }));
+        setSelectedPlanifiers(planifiersWithDates);
       } else {
         resetForm();
       }
@@ -67,7 +139,7 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
   const loadSites = async () => {
     try {
       setLoading(true);
-      const data = await siteService.getAllSites();
+      const data = await siteService.getAll();
       setSites(data);
     } catch (error) {
       console.error('Erreur lors du chargement des sites:', error);
@@ -82,19 +154,79 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
       nom: '',
       statut: 'PLANIFIEE',
       type: 'VISITE',
-      datePrevu: format(new Date(), 'yyyy-MM-dd')
+      frequence: {},
+      planifiers: [],
+      dernierIntervention: []
     });
-    setSelectedDate(new Date());
+    setSelectedPlanifiers([]);
   };
 
   const handleFieldChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(date);
-      setFormData(prev => ({ ...prev, datePrevu: format(date, 'yyyy-MM-dd') }));
+  const handleFrequenceChange = (frequence: Frequence) => {
+    setFormData(prev => ({ ...prev, frequence }));
+  };
+
+  const handleSiteSelection = (siteId: number, checked: boolean) => {
+    const dateNow = new Date();
+    const dateDefaut = format(dateNow, 'yyyy-MM-dd');
+    
+    if (checked) {
+      // Ajouter le site
+      const site = sites.find(s => s.id_site === siteId);
+      if (site) {
+        const newPlanifier: Planifier = {
+          site,
+          datePlanifie: dateDefaut
+        };
+
+        setSelectedPlanifiers(prev => [...prev, newPlanifier]);
+        setFormData(prev => ({
+          ...prev,
+          planifiers: [...(prev.planifiers || []), newPlanifier],
+          dernierIntervention: [...(prev.dernierIntervention || []), dateDefaut]
+        }));
+      }
+    } else {
+      // Retirer le site
+      const planifierToRemove = selectedPlanifiers.find(p => p.site.id_site === siteId);
+      if (planifierToRemove) {
+        const planifierIndex = selectedPlanifiers.findIndex(p => p.site.id_site === siteId);
+        
+        setSelectedPlanifiers(prev => prev.filter(p => p.site.id_site !== siteId));
+        setFormData(prev => ({
+          ...prev,
+          planifiers: prev.planifiers?.filter(p => p.site.id_site !== siteId) || [],
+          dernierIntervention: prev.dernierIntervention?.filter((_, index) => index !== planifierIndex) || []
+        }));
+      }
+    }
+  };
+
+  const handleDateChange = (siteId: number, date: string) => {
+    setSelectedPlanifiers(prev => 
+      prev.map(p => 
+        p.site.id_site === siteId 
+          ? { ...p, datePlanifie: date }
+          : p
+      )
+    );
+    
+    const planifierIndex = selectedPlanifiers.findIndex(p => p.site.id_site === siteId);
+    if (planifierIndex !== -1) {
+      setFormData(prev => ({
+        ...prev,
+        planifiers: prev.planifiers?.map(p => 
+          p.site.id_site === siteId 
+            ? { ...p, datePlanifie: date }
+            : p
+        ) || [],
+        dernierIntervention: prev.dernierIntervention?.map((d, index) => 
+          index === planifierIndex ? date : d
+        ) || []
+      }));
     }
   };
 
@@ -107,20 +239,42 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
         return;
       }
 
-      if (!formData.site?.id_site) {
-        toast.error('Veuillez sélectionner un site');
+      if (!selectedPlanifiers.length) {
+        toast.error('Veuillez sélectionner au moins un site');
         return;
       }
 
+      if (!formData.frequence || (!formData.frequence.frequenceStandard && !formData.frequence.valeurPersonnalisee && !formData.frequence.heuresTotales)) {
+        toast.error('Veuillez définir une fréquence');
+        return;
+      }
+
+      // Calculer la date prévue si elle n'existe pas
+      const datePrevu = formData.datePrevu || calculerProchaineMaintenance(
+        selectedPlanifiers[0]?.datePlanifie || format(new Date(), 'yyyy-MM-dd'), 
+        formData.frequence || {}
+      );
+
       const dataToSubmit = {
-        tachePlanifie: formData,
-        siteId: formData.site.id_site
+        tachePlanifie: {
+          ...formData,
+          datePrevu
+        },
+        planifiers: selectedPlanifiers.map(p => ({
+          site: p.site,
+          datePlanifie: p.datePlanifie
+        }))
       };
 
       if (initialData?.id_tachePlanifie) {
-        await planningService.updateTachePlanifie(initialData.id_tachePlanifie, dataToSubmit);
+        // Pour la mise à jour, utiliser l'endpoint PUT /taches/{id}
+        await planningService.updateTachePlanifie(initialData.id_tachePlanifie, {
+          tachePlanifie: dataToSubmit.tachePlanifie,
+          planifiers: dataToSubmit.planifiers
+        });
         toast.success('Tâche mise à jour avec succès');
       } else {
+        console.log('Données envoyées:', dataToSubmit);
         await planningService.createTachePlanifie(dataToSubmit);
         toast.success('Tâche créée avec succès');
       }
@@ -154,18 +308,9 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
     }
   };
 
-
-
-    const handleDate = (date: Date | undefined) => {
-    if (date) {
-      
-    }
-  };
-
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
@@ -188,7 +333,7 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
                 </Button>
                 <Button 
                   onClick={handleSubmit}
-                  disabled={submitting || !formData.nom.trim()}
+                  disabled={submitting || !formData.nom.trim() || !selectedPlanifiers.length}
                   className="bg-purple-600 hover:bg-purple-700"
                 >
                   {submitting ? (
@@ -245,70 +390,113 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
                   </Select>
                 </div>
 
+                {/* Statut fixé à PLANIFIEE - suppression du champ de sélection */}
                 <div>
-                  <Label htmlFor="statut">Statut *</Label>
-                  <Select
-                    value={formData.statut}
-                    onValueChange={(value) => handleFieldChange('statut', value as StatutTache)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(statutTacheLabels).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${
-                              key === 'PLANIFIEE' ? 'bg-blue-500' :
-                              key === 'REALISEE' ? 'bg-green-500' :
-                              key === 'ANNULEE' ? 'bg-red-500' : 'bg-orange-500'
-                            }`} />
-                            {label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Statut</Label>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500" />
+                      <span className="font-medium">Planifiée</span>
+                    </div>
+                  </div>
                 </div>
+              </div>
+            </FormSection>
 
-                <div>
-                  <Label htmlFor="site">Site *</Label>
-                  <Select
-                    value={formData.site?.id_site?.toString()}
-                    onValueChange={(value) => {
-                      const site = sites.find(s => s.id_site === parseInt(value));
-                      handleFieldChange('site', site);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un site" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sites.map((site) => (
-                        <SelectItem key={site.id_site} value={site.id_site!.toString()}>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
-                            {site.nom} - {site.ville}
+            <FormSection 
+              title="Fréquence de la tâche" 
+              description="Définissez à quelle fréquence cette tâche doit être répétée"
+              icon={<Clock className="w-4 h-4" />}
+            >
+              <FrequenceSelector
+                value={formData.frequence || {}}
+                onChange={handleFrequenceChange}
+                label="Fréquence de répétition"
+              />
+            </FormSection>
+
+            <FormSection 
+              title="Sites concernés et planning" 
+              description="Sélectionnez les sites et définissez les dates de maintenance"
+              icon={<MapPin className="w-4 h-4" />}
+            >
+              <div className="space-y-4">
+                <Label>Sites disponibles *</Label>
+                <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto">
+                  {sites.map((site) => {
+                    const selectedPlanifier = selectedPlanifiers.find(p => p.site.id_site === site.id_site);
+                    const isSelected = !!selectedPlanifier;
+                    const datePlanifie = selectedPlanifier?.datePlanifie || format(new Date(), 'yyyy-MM-dd');
+                    const prochaineDate = calculerProchaineMaintenance(datePlanifie, formData.frequence || {});
+                    
+                    return (
+                      <div key={site.id_site} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleSiteSelection(site.id_site!, checked as boolean)}
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-gray-500" />
+                              <span className="font-medium">{site.nom}</span>
+                            </div>
+                            <p className="text-sm text-gray-600">{site.ville}</p>
+                            
+                            {isSelected && (
+                              <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div>
+                                    <Label className="text-sm">Date de dernière intervention</Label>
+                                    <Input
+                                      type="date"
+                                      value={datePlanifie}
+                                      onChange={(e) => handleDateChange(site.id_site!, e.target.value)}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  
+                                  {prochaineDate && (
+                                    <div>
+                                      <Label className="text-sm">Prochaine maintenance prévue</Label>
+                                      <div className="mt-1 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                                        <div className="flex items-center gap-2">
+                                          <CalendarIcon className="w-4 h-4 text-blue-600" />
+                                          <span className="text-sm font-medium text-blue-700">
+                                            {format(parseISO(prochaineDate), 'dd/MM/yyyy', { locale: fr })}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {!prochaineDate && formData.frequence && Object.keys(formData.frequence).length > 0 && (
+                                  <div className="p-2 bg-orange-50 border border-orange-200 rounded-md">
+                                    <div className="flex items-center gap-2">
+                                      <AlertTriangle className="w-4 h-4 text-orange-600" />
+                                      <span className="text-sm text-orange-700">
+                                        Impossible de calculer la prochaine maintenance
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Date prévue *</Label>
-                  
-                    <Input
-                      type="date"
-                      value={selectedDate || format(new Date(), 'yyyy-MM-dd')}
-                      onChange={(e) => handleDateChange(e.target.value)}
-                      className="w-full border border-gray-300 rounded px-3 py-2"
-                      required
-                    />
-                  
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
                 
+                {selectedPlanifiers.length === 0 && (
+                  <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-lg">
+                    <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-500">Aucun site sélectionné</p>
+                    <p className="text-sm text-gray-400">Sélectionnez au moins un site pour cette tâche</p>
+                  </div>
+                )}
               </div>
             </FormSection>
 
@@ -327,18 +515,6 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
                     placeholder="Nom du responsable ou équipe"
                   />
                 </div>
-
-                {formData.statut === 'REALISEE' && (
-                  <div>
-                    <Label htmlFor="dernierIntervention">Date de dernière intervention</Label>
-                    <Input
-                      id="dernierIntervention"
-                      type="date"
-                      value={formData.dernierIntervention || ''}
-                      onChange={(e) => handleFieldChange('dernierIntervention', e.target.value)}
-                    />
-                  </div>
-                )}
               </div>
             </FormSection>
 
@@ -349,7 +525,10 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
                 <div>
                   <h4 className="font-medium">{formData.nom || 'Nouvelle tâche'}</h4>
                   <p className="text-sm text-muted-foreground">
-                    {formData.site ? `${formData.site.nom} - ${formData.site.ville}` : 'Aucun site sélectionné'}
+                    {selectedPlanifiers.length > 0 ? 
+                      `${selectedPlanifiers.length} site(s) sélectionné(s)` : 
+                      'Aucun site sélectionné'
+                    }
                   </p>
                 </div>
                 <Badge className={getStatutColor(formData.statut)}>
@@ -357,18 +536,48 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
                 </Badge>
               </div>
               
-              <div className="text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <CalendarIcon className="w-4 h-4" />
-                  Prévue le {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
-                </div>
-                {formData.responsable && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <User className="w-4 h-4" />
-                    Responsable: {formData.responsable}
+              {selectedPlanifiers.length > 0 && (
+                <div className="space-y-3">
+                  <h5 className="font-medium text-sm">Sites avec dates individuelles :</h5>
+                  <div className="space-y-2">
+                    {selectedPlanifiers.map((planifier) => {
+                      const prochaineDate = calculerProchaineMaintenance(planifier.datePlanifie, formData.frequence || {});
+                      
+                      return (
+                        <div key={planifier.site.id_site} className="p-3 bg-white rounded-lg border border-purple-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Badge variant="outline" className="text-xs mb-1 bg-blue-50 text-blue-700 border-blue-200">
+                                📍 {planifier.site.nom} - {planifier.site.ville}
+                              </Badge>
+                              {planifier.site.nom_contact && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Contact: {planifier.site.nom_contact}
+                                  {planifier.site.tel_contact && ` - ${planifier.site.tel_contact}`}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs text-gray-500">Dernière intervention</div>
+                              <div className="text-sm font-medium">
+                                {format(new Date(planifier.datePlanifie), 'dd/MM/yyyy', { locale: fr })}
+                              </div>
+                              {prochaineDate && (
+                                <>
+                                  <div className="text-xs text-blue-600 mt-1">Prochaine maintenance</div>
+                                  <div className="text-sm font-medium text-blue-700">
+                                    {format(parseISO(prochaineDate), 'dd/MM/yyyy', { locale: fr })}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </EnhancedForm>
         </ScrollArea>

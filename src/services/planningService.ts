@@ -4,24 +4,19 @@ import type {
   TachePlanifie, 
   RequetCreateTachePlanifie, 
   FicheIntervention, 
-  RequetCreateFiche 
+  RequetCreateFiche, 
+  Planifier
 } from '../types';
 
 export class PlanningService {
-  private readonly endpoint = '/planning';
+   private readonly endpoint = '/planning';
 
   async getPlanning(): Promise<RequetGetPlanning[]> {
     try {
       return await apiService.get<RequetGetPlanning[]>(`${this.endpoint}/planning`);
     } catch (error) {
       console.error('Erreur lors de la récupération du planning:', error);
-      /* if ((error as Error).message === 'MOCK_FALLBACK') {
-        return this.getMockPlanning();
-      }
-      return this.getMockPlanning(); */ // Fallback par défaut
-    
-      return error;
-      
+      throw error;
     }
   }
 
@@ -30,11 +25,7 @@ export class PlanningService {
       return await apiService.get<TachePlanifie[]>(`${this.endpoint}/taches`);
     } catch (error) {
       console.error('Erreur lors de la récupération des tâches:', error);
-      /* if ((error as Error).message === 'MOCK_FALLBACK') {
-        return this.getMockTaches();
-      }
-      return this.getMockTaches(); */ // Fallback par défaut
-      return error;
+      throw error;
     }
   }
 
@@ -43,10 +34,12 @@ export class PlanningService {
   }
 
   async updateTachePlanifie(id: number, request: RequetCreateTachePlanifie): Promise<TachePlanifie> {
-    return apiService.put<TachePlanifie>(`${this.endpoint}/taches/${id}`, request);
+    // Note: L'endpoint backend attend juste TachePlanifie pour la mise à jour
+    return apiService.put<TachePlanifie>(`${this.endpoint}/taches/${id}`, request.tachePlanifie);
   }
 
   async createTachePlanifie(createData: RequetCreateTachePlanifie): Promise<TachePlanifie> {
+    console.log('Données envoyées au backend:', createData);
     return apiService.post<TachePlanifie>(`${this.endpoint}/tachePlanifie`, createData);
   }
 
@@ -79,18 +72,22 @@ export class PlanningService {
       return await apiService.get<FicheIntervention[]>(`${this.endpoint}/fiches`);
     } catch (error) {
       console.error('Erreur lors de la récupération des fiches:', error);
-      /* if ((error as Error).message === 'MOCK_FALLBACK') {
-        return this.getMockFiches();
-      }
-      return this.getMockFiches(); */ // Fallback par défaut
-      return error;
+      throw error;
+    }
+  }
+
+  async getPlanifiersByTacheId(tacheId: number): Promise<Planifier[]> {
+    try {
+      return await apiService.get<Planifier[]>(`${this.endpoint}/taches/${tacheId}/planifiers`);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des planifiers:', error);
+      return [];
     }
   }
 
 
   async telechargement(ficheId : number): Promise<void> {
     try {
-    
       const pdfUrl = `http://localhost:8491/download-pdf/${ficheId}`;
       
       // Ouvrir dans un nouvel onglet
@@ -101,7 +98,6 @@ export class PlanningService {
       throw new Error('Impossible d\'ouvrir le PDF. Vérifiez que l\'API est accessible.');
     }
   }
-
 
   async downloadFicheInterventionPDF(ficheId: number): Promise<void> {
     try {
@@ -130,8 +126,6 @@ export class PlanningService {
       document.body.appendChild(link);
       link.click();
       
-      //un truc
-
       window.print();
 
       // Nettoyer
@@ -170,9 +164,6 @@ export class PlanningService {
       document.body.appendChild(link);
       link.click();
       
-
-      //un truc
-
       window.print();
 
       // Nettoyer
@@ -183,21 +174,6 @@ export class PlanningService {
       throw error;
     }
   }
-
-/*   private getMockPlanning(): RequetGetPlanning[] {
-    // Ne retourner de données mockées que si aucune donnée réelle n'est disponible
-    return [];
-  }
-
-  private getMockTaches(): TachePlanifie[] {
-    // Ne retourner de données mockées que si aucune donnée réelle n'est disponible
-    return [];
-  }
-
-  private getMockFiches(): FicheIntervention[] {
-    // Ne retourner de données mockées que si aucune donnée réelle n'est disponible
-    return [];
-  } */
 }
 
 export const planningService = new PlanningService();

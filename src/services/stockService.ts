@@ -1,5 +1,5 @@
 import { apiService } from './api';
-import type { Stock, RequetCreateStock, SortieStock } from '../types';
+import type { Stock, RequetCreateStock, SortieStock, RequetCreatePiece } from '../types';
 
 export class StockService {
   private readonly endpoint = '/stock';
@@ -9,30 +9,26 @@ export class StockService {
       return await apiService.post<Stock>(`${this.endpoint}/create`, createData);
     } catch (error) {
       console.error('Erreur lors de la création du stock:', error);
-      /* if ((error as Error).message === 'MOCK_FALLBACK') {
-        const newStock = {
-          ...createData,
-          id_stock: Date.now(), // ID temporaire
-          quantite: 0,
-          derniereMiseAJour: new Date().toISOString()
-        };
-        return newStock;
-      } */
       throw error;
     }
   }
+
+  async createPiece(createData: RequetCreatePiece): Promise<Stock> {
+    try {
+      return await apiService.post<Stock>(`${this.endpoint}/create/piece`, createData);
+    } catch (error) {
+      console.error('Erreur lors de la création de la piece :', error);
+      throw error;
+    }
+  }
+
 
   async getAll(): Promise<Stock[]> {
     try {
       return await apiService.get<Stock[]>(`${this.endpoint}/get`);
     } catch (error) {
       console.error('Erreur lors de la récupération des stocks:', error);
-      /* if ((error as Error).message === 'MOCK_FALLBACK') {
-        return this.getMockStocks();
-      }
-      return this.getMockStocks(); */ // Fallback par défaut
-      return error;
-      
+      throw error;      
     }
   }
 

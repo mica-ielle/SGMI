@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { stockService } from '../services/stockService';
 import { equipementService } from '../services/equipementService';
-import type { Stock, Equipement, RequetCreateStock } from '../types';
+import type { Stock, Equipement, RequetCreateStock, RequetCreatePiece, Piece } from '../types';
 
 export const StocksPage = () => {
   const [stocks, setStocks] = useState<Stock[]>([]);
@@ -38,7 +38,8 @@ export const StocksPage = () => {
   });
 
   const [selectedPieceId, setSelectedPieceId] = useState<number | null>(null);
-
+  const [creationMode, setCreationMode] = useState<'existing' | 'new'>('existing');
+  
   useEffect(() => {
     loadData();
   }, []);
@@ -67,20 +68,38 @@ export const StocksPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPieceId) {
+    
+    // Validation selon le mode
+    if (creationMode === 'existing' && !selectedPieceId) {
       alert('Veuillez sélectionner une pièce');
       return;
+    }
+    
+    if (creationMode === 'new') {
+      if (!formData.piece.nom.trim() || !formData.piece.reference.trim()) {
+        alert('Veuillez remplir le nom et la référence de la pièce');
+        return;
+      }
     }
     
     try {
       if (editingStock) {
         await stockService.update(editingStock.id_stock!, formData);
       } else {
-        const createData: RequetCreateStock = {
-          stock: formData,
-          pieceID: selectedPieceId
-        };
-        await stockService.create(createData);
+        if (creationMode === 'existing') {
+          const createData: RequetCreateStock = {
+            stock: formData,
+            pieceID: selectedPieceId!
+          };
+          await stockService.create(createData);
+        } else {
+          // Création avec nouvelle pièce
+          const createData: RequetCreatePiece = {
+            stock: formData,
+            piece: formData.piece
+          };
+          await stockService.createPiece(createData);
+        }
       }
       
       await loadData();
@@ -149,6 +168,7 @@ export const StocksPage = () => {
     });
     setSelectedPieceId(null);
     setEditingStock(null);
+    setCreationMode('existing');
   };
 
   const filteredStocks = stocks.filter(stock =>
@@ -215,25 +235,89 @@ export const StocksPage = () => {
             </DialogHeader>
             
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="piece">Pièce *</Label>
-                <Select 
-                  value={selectedPieceId?.toString() || ''} 
-                  onValueChange={(value) => setSelectedPieceId(Number(value))}
-                  disabled={!!editingStock}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une pièce" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {piecesDisponibles.map((piece) => (
-                      <SelectItem key={piece.id_piece} value={piece.id_piece.toString()}>
-                        {piece.nom} - {piece.reference}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              
+              {!editingStock && (
+                <div className="space-y-3">
+                  <Label>Mode de création</Label>
+                  <div className="flex space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => setCreationMode('existing')}
+                      className={`flex-1 p-3 text-left border rounded-lg transition-colors ${
+                        creationMode === 'existing' 
+                          ? 'border-purple-500 bg-purple-50 text-purple-700' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-medium">Pièce existante</div>
+                      <div className="text-sm text-gray-600">Sélectionner depuis un équipement</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCreationMode('new')}
+                      className={`flex-1 p-3 text-left border rounded-lg transition-colors ${
+                        creationMode === 'new' 
+                          ? 'border-purple-500 bg-purple-50 text-purple-700' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="font-medium">Nouvelle pièce</div>
+                      <div className="text-sm text-gray-600">Créer une pièce indépendante</div>
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {creationMode === 'existing' ? (
+                <div className="space-y-2">
+                  <Label htmlFor="piece">Pièce *</Label>
+                  <Select 
+                    value={selectedPieceId?.toString() || ''} 
+                    onValueChange={(value) => setSelectedPieceId(Number(value))}
+                    disabled={!!editingStock}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une pièce" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {piecesDisponibles.map((piece) => (
+                        <SelectItem key={piece.id_piece} value={piece.id_piece.toString()}>
+                          {piece.nom} - {piece.reference}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nom_piece">Nom de la pièce *</Label>
+                    <Input
+                      id="nom_piece"
+                      value={formData.piece.nom}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        piece: { ...prev.piece, nom: e.target.value }
+                      }))}
+                      placeholder="Ex: Filtre à air, Joint d'étanchéité..."
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reference_piece">Référence *</Label>
+                    <Input
+                      id="reference_piece"
+                      value={formData.piece.reference}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        piece: { ...prev.piece, reference: e.target.value }
+                      }))}
+                      placeholder="Ex: FAR-2024-001"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

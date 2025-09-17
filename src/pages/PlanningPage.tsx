@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, Clock, CheckCircle, AlertTriangle, Filter, Calendar, Download } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Clock, CheckCircle, AlertTriangle, Filter, Calendar, Calendar as CalendarIcon , Download, MapPin } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -8,6 +8,7 @@ import { DetailCard } from '../components/ui/detail-card';
 import { InfoGrid, InfoItem } from '../components/ui/info-grid';
 import { TachePlanifieeForm } from '../components/planning/TachePlanifieeForm';
 import { TachePlanifieeDetailView } from '../components/planning/TachePlanifieeDetailView';
+import { RescheduleDialog } from '../components/planning/RescheduleDialog';
 import { FicheInterventionForm } from '../components/interventions/FicheInterventionForm';
 import { DefaillanceForm } from '../components/interventions/DefaillanceForm';
 import { planningService } from '../services/planningService';
@@ -21,7 +22,8 @@ import type {
   StatutTache,
   TypeTachePlanifie,
   FicheIntervention,
-  Site
+  Site,
+  Planifier
 } from '../types';
 import { siteService } from '../services/siteService';
 
@@ -42,17 +44,18 @@ export const PlanningPage = () => {
   const [planningMaintenances, setPlanningMaintenances] = useState<RequetGetPlanning[]>([]);
   const [tachesPlannifiees, setTachesPlannifiees] = useState<TachePlanifie[]>([]);
   const [fichesIntervention, setFichesIntervention] = useState<FicheIntervention[]>([]);
+  const [planifiersData, setPlanifiersData] = useState<Record<number, Planifier[]>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [resolvedSites, setResolvedSites] = useState(null);
-
   
   // États des dialogs
   const [isTacheDialogOpen, setIsTacheDialogOpen] = useState(false);
   const [isFicheDialogOpen, setIsFicheDialogOpen] = useState(false);
   const [isDefaillanceDialogOpen, setIsDefaillanceDialogOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [selectedTache, setSelectedTache] = useState<TachePlanifie | null>(null);
   const [editingTache, setEditingTache] = useState<TachePlanifie | null>(null);
+  const [reschedulingTache, setReschedulingTache] = useState<TachePlanifie | null>(null);
   
   // Filtres
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,31 +73,57 @@ export const PlanningPage = () => {
         planningService.getPlanning(),
         planningService.getAllTachesPlanifiees(),
         planningService.getAllFichesIntervention(),
-        siteService.getAll()
+        siteService.getAll ? siteService.getAll() : siteService.getAllSites()
       ]);
+      
+      console.log('📊 Données tâches chargées:', tachesData);
+      
       setPlanningMaintenances(planningData);
       setTachesPlannifiees(tachesData);
       setFichesIntervention(fichesData);
 
-    // Construire un mapping des sites par ID de tâche
-    const sitesRésolus: Record<string, Site> = {};
-
-    tachesData.forEach((tache) => {
-      const site = sitesData.find((s) => s.id_site === tache.id_site);
-      if (site) {
-        sitesRésolus[tache.id_tachePlanifie] = site;
-      }
-    });
-
-    // Mettre à jour l’état des sites résolus
-    setResolvedSites(sitesRésolus);
-
+      // ✅ CHARGER LES PLANIFIERS POUR CHAQUE TÂCHE
+      await loadPlanifiersForAllTaches(tachesData);
 
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
       toast.error('Erreur lors du chargement du planning');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ✅ FONCTION POUR CHARGER LES PLANIFIERS DE TOUTES LES TÂCHES
+  const loadPlanifiersForAllTaches = async (taches: TachePlanifie[]) => {
+    const planifiersMap: Record<number, Planifier[]> = {};
+    
+    try {
+      // Charger les planifiers pour chaque tâche en parallèle
+      const planifiersPromises = taches
+        .filter(tache => tache.id_tachePlanifie)
+        .map(async (tache) => {
+          try {
+            const planifiers = await planningService.getPlanifiersByTacheId(tache.id_tachePlanifie!);
+            return { tacheId: tache.id_tachePlanifie!, planifiers };
+          } catch (error) {
+            console.error(`Erreur lors du chargement des planifiers pour la tâche ${tache.id_tachePlanifie}:`, error);
+            return { tacheId: tache.id_tachePlanifie!, planifiers: [] };
+          }
+        });
+
+      const results = await Promise.all(planifiersPromises);
+      
+      // Construire le map des planifiers
+      results.forEach(({ tacheId, planifiers }) => {
+        planifiersMap[tacheId] = planifiers;
+        console.log(`📍 Planifiers chargés pour tâche ${tacheId}:`, planifiers);
+      });
+      
+      setPlanifiersData(planifiersMap);
+      console.log('📊 Tous les planifiers chargés:', planifiersMap);
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des planifiers:', error);
     }
   };
 
@@ -128,7 +157,6 @@ export const PlanningPage = () => {
 
   const handleMarkCompleted = async (tache: TachePlanifie) => {
     try {
-      const updatedTache = { ...tache, statut: 'REALISEE' as StatutTache };
       await planningService.validerTache(tache.id_tachePlanifie!);
       await loadData();
       toast.success('Tâche marquée comme terminée');
@@ -141,11 +169,7 @@ export const PlanningPage = () => {
 
   const handleCancelTache = async (tache: TachePlanifie) => {
     try {
-      const updatedTache = { ...tache, statut: 'ANNULEE' as StatutTache };
-      await planningService.updateTachePlanifie(tache.id_tachePlanifie!, {
-        tachePlanifie: updatedTache,
-        siteId: tache.site?.id_site || 0
-      });
+      await planningService.annulerTache(tache.id_tachePlanifie!);
       await loadData();
       toast.success('Tâche annulée');
       setIsDetailOpen(false);
@@ -156,10 +180,8 @@ export const PlanningPage = () => {
   };
 
   const handleRescheduleTache = (tache: TachePlanifie) => {
-    setSelectedTache(tache);
-    setEditingTache(tache);
-    setIsDetailOpen(false);
-    setIsTacheDialogOpen(true);
+    setReschedulingTache(tache);
+    setIsRescheduleDialogOpen(true);
   };
 
   const handleDownloadFichePDF = async (ficheId: number) => {
@@ -224,9 +246,193 @@ export const PlanningPage = () => {
     }
   };
 
+  // ✅ FONCTION POUR OBTENIR L'AFFICHAGE DES SITES CONCERNÉS
+  const getSitesConcernes = (tache: TachePlanifie) => {
+    // Utiliser les planifiers chargés
+    const planifiers = planifiersData[tache.id_tachePlanifie!] || [];
+    
+    console.log(`🔍 Sites pour tâche ${tache.id_tachePlanifie}:`, { 
+      planifiers: planifiers.length,
+      sites: tache.sites?.length || 0,
+      fallbackSite: !!tache.site 
+    });
+    
+    if (planifiers.length > 0) {
+      if (planifiers.length === 1) {
+        const site = planifiers[0].site;
+        return {
+          text: `${site.nom} - ${site.ville}`,
+          count: 1,
+          sites: [site]
+        };
+      } else {
+        return {
+          text: `${planifiers.length} sites concernés`,
+          count: planifiers.length,
+          sites: planifiers.map(p => p.site)
+        };
+      }
+    }
+    
+    // Fallback sur l'ancienne structure (sites array)
+    if (tache.sites && tache.sites.length > 0) {
+      if (tache.sites.length === 1) {
+        return {
+          text: `${tache.sites[0].nom} - ${tache.sites[0].ville}`,
+          count: 1,
+          sites: tache.sites
+        };
+      } else {
+        return {
+          text: `${tache.sites.length} sites concernés`,
+          count: tache.sites.length,
+          sites: tache.sites
+        };
+      }
+    }
+    
+    // Fallback sur le site unique
+    if (tache.site) {
+      return {
+        text: `${tache.site.nom} - ${tache.site.ville}`,
+        count: 1,
+        sites: [tache.site]
+      };
+    }
+    
+    return {
+      text: 'Aucun site défini',
+      count: 0,
+      sites: []
+    };
+  };
+
+  // Fonction pour calculer la prochaine date d'intervention
+  const calculateProchaineDateIntervention = (tache: TachePlanifie): string => {
+    if (!tache.frequence) {
+      return 'Non calculable';
+    }
+
+    // Utiliser les planifiers chargés
+    const planifiers = planifiersData[tache.id_tachePlanifie!] || [];
+    
+    // Prendre la première date de planification ou utiliser la date d'aujourd'hui
+    const derniereIntervention = planifiers.length > 0
+      ? planifiers[0]?.datePlanifie 
+      : (tache.dernierIntervention && tache.dernierIntervention[0]) || format(new Date(), 'yyyy-MM-dd');
+    
+    const lastDate = new Date(derniereIntervention);
+    let nextDate = new Date(lastDate);
+
+    // Calculer selon le type de fréquence
+    if (tache.frequence.frequenceStandard) {
+      switch (tache.frequence.frequenceStandard) {
+        case 'QUOTIDIENNE':
+          nextDate.setDate(nextDate.getDate() + 1);
+          break;
+        case 'HEBDOMADAIRE':
+          nextDate.setDate(nextDate.getDate() + 7);
+          break;
+        case 'MENSUELLE':
+          nextDate.setMonth(nextDate.getMonth() + 1);
+          break;
+        case 'BIMENSUELLE':
+          nextDate.setMonth(nextDate.getMonth() + 2);
+          break;
+        case 'TRIMESTRIELLE':
+          nextDate.setMonth(nextDate.getMonth() + 3);
+          break;
+        case 'SEMESTRIELLE':
+          nextDate.setMonth(nextDate.getMonth() + 6);
+          break;
+        case 'ANNUELLE':
+          nextDate.setFullYear(nextDate.getFullYear() + 1);
+          break;
+        case 'CINQ_ANS':
+          nextDate.setFullYear(nextDate.getFullYear() + 5);
+          break;
+        case 'DIX_ANS':
+          nextDate.setFullYear(nextDate.getFullYear() + 10);
+          break;
+      }
+    } else if (tache.frequence.valeurPersonnalisee && tache.frequence.unitePersonnalisee) {
+      const valeur = tache.frequence.valeurPersonnalisee;
+      switch (tache.frequence.unitePersonnalisee) {
+        case 'JOURS':
+          nextDate.setDate(nextDate.getDate() + valeur);
+          break;
+        case 'SEMAINES':
+          nextDate.setDate(nextDate.getDate() + (valeur * 7));
+          break;
+        case 'MOIS':
+          nextDate.setMonth(nextDate.getMonth() + valeur);
+          break;
+        case 'ANNEES':
+          nextDate.setFullYear(nextDate.getFullYear() + valeur);
+          break;
+        case 'HEURES_UTILISATION':
+          // Pour les heures d'utilisation, calculer en fonction des heures moyennes par jour
+          if (tache.frequence.heuresMoyennesParJour) {
+            const jours = Math.ceil(valeur / tache.frequence.heuresMoyennesParJour);
+            nextDate.setDate(nextDate.getDate() + jours);
+          }
+          break;
+      }
+    } else if (tache.frequence.heuresTotales && tache.frequence.heuresMoyennesParJour) {
+      const jours = Math.ceil(tache.frequence.heuresTotales / tache.frequence.heuresMoyennesParJour);
+      nextDate.setDate(nextDate.getDate() + jours);
+    }
+
+    try {
+      return format(nextDate, 'dd/MM/yyyy', { locale: fr });
+    } catch (error) {
+      console.error('Erreur lors du formatage de la date:', error);
+      return 'Date invalide';
+    }
+  };
+
+  // Fonction pour obtenir la dernière date d'intervention affichable
+  const getDerniereInterventionDisplay = (tache: TachePlanifie): string => {
+    // Utiliser les planifiers chargés
+    const planifiers = planifiersData[tache.id_tachePlanifie!] || [];
+    
+    if (planifiers.length > 0) {
+      const dates = planifiers
+        .map(p => p.datePlanifie)
+        .filter(date => date)
+        .sort()
+        .reverse(); // Plus récente en premier
+      
+      if (dates.length > 0) {
+        try {
+          return format(new Date(dates[0]), 'dd/MM/yyyy', { locale: fr });
+        } catch (error) {
+          console.error('Erreur format date planifier:', error);
+        }
+      }
+    }
+    
+    // Fallback sur l'ancienne structure
+    if (tache.dernierIntervention && tache.dernierIntervention.length > 0 && tache.dernierIntervention[0]) {
+      try {
+        return format(new Date(tache.dernierIntervention[0]), 'dd/MM/yyyy', { locale: fr });
+      } catch (error) {
+        console.error('Erreur format date intervention:', error);
+      }
+    }
+    
+    return 'Aucune';
+  };
+
   const filteredTaches = tachesPlannifiees.filter(tache => {
+    const planifiers = planifiersData[tache.id_tachePlanifie!] || [];
+    
     const matchesSearch = tache.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (tache.site?.nom.toLowerCase().includes(searchTerm.toLowerCase()));
+                         (tache.site?.nom.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (planifiers.some(p => 
+                           p.site.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           p.site.ville.toLowerCase().includes(searchTerm.toLowerCase())
+                         ));
     const matchesStatut = filterStatut === 'all' || tache.statut === filterStatut;
     const matchesType = filterType === 'all' || tache.type === filterType;
     return matchesSearch && matchesStatut && matchesType;
@@ -250,17 +456,29 @@ export const PlanningPage = () => {
     );
   }
 
-
-  const sitesByTacheId = Object.fromEntries(
-    filteredTaches.map((tache) => [
-      tache.id_tachePlanifie,
-      siteService.getByTp(tache.id_tachePlanifie)
-    ])
-  )
-
-
   return (
     <div className="space-y-6">
+      {/* Debug des données (à retirer en production) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="p-3 bg-gray-100 rounded-lg text-xs">
+          <details>
+            <summary className="cursor-pointer font-medium">🔍 Debug des données</summary>
+            <pre className="mt-2 overflow-auto max-h-40">
+              {JSON.stringify({
+                totalTaches: tachesPlannifiees.length,
+                planifiersChargés: Object.keys(planifiersData).length,
+                exempleStructure: tachesPlannifiees[0] ? {
+                  id: tachesPlannifiees[0].id_tachePlanifie,
+                  nom: tachesPlannifiees[0].nom,
+                  sites: tachesPlannifiees[0].sites?.length || 0,
+                  planifiers: planifiersData[tachesPlannifiees[0].id_tachePlanifie!]?.length || 0
+                } : null
+              }, null, 2)}
+            </pre>
+          </details>
+        </div>
+      )}
+
       {/* En-tête avec actions */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <div>
@@ -281,14 +499,6 @@ export const PlanningPage = () => {
             <Edit className="w-4 h-4 mr-2" />
             Fiche d'intervention
           </Button>
-          
-         {/*  <Button 
-            className="bg-red-600 hover:bg-red-700"
-            onClick={() => setIsDefaillanceDialogOpen(true)}
-          >
-            <AlertTriangle className="w-4 h-4 mr-2" />
-            Signaler défaillance
-          </Button> */}
         </div>
       </div>
 
@@ -386,19 +596,18 @@ export const PlanningPage = () => {
         {filteredTaches.map((tache) => {
           const urgency = getUrgency(tache);
           const urgencyBadge = getUrgencyBadge(urgency);
+          const sitesConcernes = getSitesConcernes(tache);
+          const planifiers = planifiersData[tache.id_tachePlanifie!] || [];
           
-          const site = sitesByTacheId[tache.id_tachePlanifie];
+          // Affichage adaptatif du site
+          const siteDisplay = sitesConcernes.count > 0 ? sitesConcernes.text : 'Site non défini';
         
-console.log('Site brut:', site);
-console.log('Type:', typeof site);
-console.log('Nom du site:', site?.nom);
-
-                          
           return (
             <DetailCard
               key={tache.id_tachePlanifie}
               title={tache.nom}
-              subtitle={`${typeTacheLabels[tache.type]} • ${site ? `${site.nom} - ${site.ville}` : 'Site non défini'}`}
+              subtitle={`${typeTacheLabels[tache.type]} `}
+              /* subtitle={`${typeTacheLabels[tache.type]} • ${siteDisplay}`} */
               status={{
                 label: statutTacheLabels[tache.statut],
                 variant: 'outline'
@@ -429,24 +638,68 @@ console.log('Nom du site:', site?.nom);
                       ? format(new Date(tache.datePrevu), 'dd MMMM yyyy', { locale: fr })
                       : 'Date non définie'
                   }
-
                   icon={<Calendar className="w-4 h-4" />}
                   highlight={urgency === 'overdue' || urgency === 'urgent'}
                 />
+                
+                {/* ✅ AFFICHAGE AMÉLIORÉ DU NOMBRE DE SITES */}
+                <InfoItem
+                  label="Sites concernés"
+                  value={
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-blue-600" />
+                      <span className="font-medium text-blue-700">
+                        {sitesConcernes.count} site{sitesConcernes.count > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  }
+                  icon={<MapPin className="w-4 h-4" />}
+                  highlight={sitesConcernes.count > 1}
+                />
+                
                 <InfoItem
                   label="Responsable"
                   value={tache.responsable || 'Non assigné'}
                   icon={<Clock className="w-4 h-4" />}
                 />
-                <InfoItem
-                  label="Dernière intervention"
-                  value={tache.dernierIntervention ? 
-                    format(new Date(tache.dernierIntervention), 'dd/MM/yyyy', { locale: fr }) : 
-                    'Aucune'
-                  }
-                  icon={<CheckCircle className="w-4 h-4" />}
-                />
               </InfoGrid>
+
+              {/* ✅ SECTION SUPPLÉMENTAIRE POUR DÉTAILLER LES SITES (SI PLUSIEURS) */}
+              {sitesConcernes.count > 1 && (
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <div className="text-sm font-medium text-gray-700 mb-2">
+                    Sites concernés par cette tâche :
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {sitesConcernes.sites.slice(0, 3).map((site, index) => (
+                      <Badge key={site.id_site || index} variant="outline" className="text-xs">
+                        <MapPin className="w-3 h-3 mr-1" />
+                        {site.nom} - {site.ville}
+                      </Badge>
+                    ))}
+                    {sitesConcernes.count > 3 && (
+                      <Badge variant="outline" className="text-xs bg-gray-100">
+                        +{sitesConcernes.count - 3} autres sites
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Afficher la prochaine date d'intervention si une fréquence est définie */}
+              {/* {tache.frequence && (
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <InfoGrid columns={1}>
+                    <InfoItem
+                      label="Prochaine date d'intervention"
+                      value={calculateProchaineDateIntervention(tache)}
+                      icon={<CalendarIcon className="w-4 h-4" />}
+                      className="font-medium"
+                      highlight={true}
+                    />
+                  </InfoGrid>
+                </div>
+              )} */}
 
               {/* Actions rapides */}
               {tache.statut === 'PLANIFIEE' && (
@@ -590,9 +843,7 @@ console.log('Nom du site:', site?.nom);
                     <div>
                       <div className="font-medium text-sm">{fiche.type === 'PREVENTIVE' ? 'Maintenance préventive' : 'Intervention corrective'}</div>
                       <div className="text-xs text-muted-foreground">
-                        
-                        {/* {format(new Date(fiche.dateHeureIntervention), 'dd/MM/yyyy HH:mm', { locale: fr })} */}
-                        
+                        {/* Date formatée si disponible */}
                       </div>
                       {fiche.equipement && (
                         <div className="text-xs text-blue-600 mt-1">
@@ -634,8 +885,7 @@ console.log('Nom du site:', site?.nom);
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm">Défaillance signalée</div>
                         <div className="text-xs text-muted-foreground">
-                          {/* {format(new Date(defaillance.dateHeureIntervention), 'dd/MM/yyyy HH:mm', { locale: fr })}
-                           */}
+                          {/* Date formatée si disponible */}
                         </div>
                         {defaillance.equipement && (
                           <div className="text-xs text-red-600 mt-1">
@@ -681,6 +931,13 @@ console.log('Nom du site:', site?.nom);
           toast.success('Défaillance signalée avec succès');
           loadData();
         }}
+      />
+
+      <RescheduleDialog
+        open={isRescheduleDialogOpen}
+        onOpenChange={setIsRescheduleDialogOpen}
+        tache={reschedulingTache}
+        onSuccess={loadData}
       />
     </div>
   );
