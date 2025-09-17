@@ -1,5 +1,7 @@
 package com.gmao.CAMGAZ_TECH.model.gestion_planning;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Frequence;
@@ -10,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -17,16 +20,16 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties("site")
 public class TachePlanifie {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id_tachePlanifie;
 
 
-    @ManyToOne
-    @JoinColumn(name = "id_site")
-    private Site site;
+    @OneToMany(mappedBy = "tachePlanifie", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Planifier> planifiers;
+
 
     private String nom;
     private String responsable;
@@ -48,9 +51,18 @@ public class TachePlanifie {
 
     private TypeTachePlanifie type;
 
+    // ✅ ANNOTATION POUR FORCER LA SÉRIALISATION AU FORMAT ISO
+    @ElementCollection
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private List<LocalDate> dernierIntervention;
 
-    private Date dernierIntervention;
-    private Date datePrevu;
+    @ManyToOne
+    @JoinColumn(name = "id_frequence")
+    private Frequence frequence;
+
+    // ✅ ANNOTATION POUR FORCER LA SÉRIALISATION AU FORMAT ISO
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate datePrevu;
 
     public int getId_tachePlanifie() {
         return id_tachePlanifie;
@@ -60,12 +72,12 @@ public class TachePlanifie {
         this.id_tachePlanifie = id_tachePlanifie;
     }
 
-    public Site getSite() {
-        return site;
+    public List<Planifier> getPlanifiers() {
+        return planifiers;
     }
 
-    public void setSite(Site site) {
-        this.site = site;
+    public void setPlanifiers(List<Planifier> planifiers) {
+        this.planifiers = planifiers;
     }
 
     public String getNom() {
@@ -100,19 +112,27 @@ public class TachePlanifie {
         this.type = type;
     }
 
-    public Date getDernierIntervention() {
+    public List<LocalDate> getDernierIntervention() {
         return dernierIntervention;
     }
 
-    public void setDernierIntervention(Date dernierIntervention) {
+    public void setDernierIntervention(List<LocalDate> dernierIntervention) {
         this.dernierIntervention = dernierIntervention;
     }
 
-    public Date getDatePrevu() {
+    public Frequence getFrequence() {
+        return frequence;
+    }
+
+    public void setFrequence(Frequence frequence) {
+        this.frequence = frequence;
+    }
+
+    public LocalDate getDatePrevu() {
         return datePrevu;
     }
 
-    public void setDatePrevu(Date datePrevu) {
+    public void setDatePrevu(LocalDate datePrevu) {
         this.datePrevu = datePrevu;
     }
 }

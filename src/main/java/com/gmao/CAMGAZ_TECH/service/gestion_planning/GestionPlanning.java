@@ -1,13 +1,11 @@
 package com.gmao.CAMGAZ_TECH.service.gestion_planning;
 
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
-import com.gmao.CAMGAZ_TECH.model.gestion_planning.FicheIntervention;
-import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
-import com.gmao.CAMGAZ_TECH.model.gestion_planning.PieceRemplacee;
-import com.gmao.CAMGAZ_TECH.model.gestion_planning.TachePlanifie;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.*;
 import com.gmao.CAMGAZ_TECH.model.gestion_stock.Stock;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface GestionPlanning {
@@ -22,9 +20,9 @@ public interface GestionPlanning {
     public List<OccurenceMainteance> getPlanningTableau();
 
     //actions sur les taches
-    public TachePlanifie createTachePlanifie(TachePlanifie tachePlanifie, int siteIdList);
+    public TachePlanifie createTachePlanifie(TachePlanifie tachePlanifie, List<Planifier> planifiers);
     public TachePlanifie affecteTachePlanifie(int idTachePlanifie, String nom);
-    public TachePlanifie reporterTachePlanifie(int idTachePlanifie, Date dateReporte);
+    public TachePlanifie reporterTachePlanifie(int idTachePlanifie, LocalDate dateReporte);
     public TachePlanifie annuleTachePlanifie(int idTachePlanifie);
     public TachePlanifie valideTachePlanifie(int idTachePlanifie);
 
@@ -44,6 +42,8 @@ public interface GestionPlanning {
     public TachePlanifie getTachesPlanifieById(int tachePId);
     public TachePlanifie updateTachePlanifie(int tachePId, TachePlanifie tachePlanifie);
 
+
+    public List<Planifier> getPlanifiersByTacheId(int tachePlanifieId);
 
 
 }

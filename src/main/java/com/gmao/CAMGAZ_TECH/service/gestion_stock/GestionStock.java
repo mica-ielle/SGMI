@@ -12,6 +12,7 @@ import java.util.List;
 public interface GestionStock {
 
     public Stock createStock(Stock stock, int pieceID);
+    public Stock createPiece(Piece piece, Stock stock);
 
     public Stock getStockByID(int stockId) throws ChangeSetPersister.NotFoundException;
 

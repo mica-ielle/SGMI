@@ -2,19 +2,17 @@ package com.gmao.CAMGAZ_TECH.service.gestion_planning;
 
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Frequence;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
-import com.gmao.CAMGAZ_TECH.model.gestion_planning.FicheIntervention;
-import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
-import com.gmao.CAMGAZ_TECH.model.gestion_planning.PieceRemplacee;
-import com.gmao.CAMGAZ_TECH.model.gestion_planning.TachePlanifie;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.*;
+import com.gmao.CAMGAZ_TECH.model.gestion_site.EquipementInstalle;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.Site;
-import com.gmao.CAMGAZ_TECH.repository.gestion_planning.FicheInterventionRepository;
-import com.gmao.CAMGAZ_TECH.repository.gestion_planning.OccurenceMaintenanceRepository;
-import com.gmao.CAMGAZ_TECH.repository.gestion_planning.PieceRemplaceeRepository;
-import com.gmao.CAMGAZ_TECH.repository.gestion_planning.TachePlanifieRepository;
+import com.gmao.CAMGAZ_TECH.model.gestion_stock.Piece;
+import com.gmao.CAMGAZ_TECH.repository.gestion_equipement.FrequenceRepository;
+import com.gmao.CAMGAZ_TECH.repository.gestion_planning.*;
 import com.gmao.CAMGAZ_TECH.repository.gestion_stock.PieceRepository;
 import com.gmao.CAMGAZ_TECH.service.gestion_equipement.GestionEquipementsImpl;
 import com.gmao.CAMGAZ_TECH.service.gestion_site.GestionSiteImpl;
 import com.gmao.CAMGAZ_TECH.service.gestion_stock.GestionStockImpl;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +21,7 @@ import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
@@ -36,6 +35,8 @@ public class GestionPlanningImpl implements GestionPlanning{
     private final PieceRemplaceeRepository pieceRemplaceeRepository;
     private final TachePlanifieRepository tachePlanifieRepository;
     private final PieceRepository pieceRepository;
+    private final FrequenceRepository frequenceRepository;
+    private final PlanifierRepository planifierRepository;
 
 
     @Autowired
@@ -51,12 +52,14 @@ public class GestionPlanningImpl implements GestionPlanning{
     final static Logger logger = LoggerFactory.getLogger(GestionPlanningImpl.class);
 
 
-    public GestionPlanningImpl(FicheInterventionRepository ficheInterventionRepository, OccurenceMaintenanceRepository occurenceMaintenanceRepository, PieceRemplaceeRepository pieceRemplaceeRepository, TachePlanifieRepository tachePlanifieRepository, PieceRepository pieceRepository) {
+    public GestionPlanningImpl(FicheInterventionRepository ficheInterventionRepository, OccurenceMaintenanceRepository occurenceMaintenanceRepository, PieceRemplaceeRepository pieceRemplaceeRepository, TachePlanifieRepository tachePlanifieRepository, PieceRepository pieceRepository, FrequenceRepository frequenceRepository, PlanifierRepository planifierRepository) {
         this.ficheInterventionRepository = ficheInterventionRepository;
         this.occurenceMaintenanceRepository = occurenceMaintenanceRepository;
         this.pieceRemplaceeRepository = pieceRemplaceeRepository;
         this.tachePlanifieRepository = tachePlanifieRepository;
         this.pieceRepository = pieceRepository;
+        this.frequenceRepository = frequenceRepository;
+        this.planifierRepository = planifierRepository;
     }
 
 
@@ -114,7 +117,7 @@ public class GestionPlanningImpl implements GestionPlanning{
         List<OccurenceMainteance> planning = new ArrayList<>();
 
         for (OccurenceMainteance o:occurenceMainteanceList) {
-            LocalDate origine = o.getDatePrevue();
+            LocalDate origine = LocalDate.from(o.getDatePrevue());
             LocalDate fin = origine.plusYears(3);
 
             /*for (Tache tache : o.getTaches()) {
@@ -163,18 +166,31 @@ public class GestionPlanningImpl implements GestionPlanning{
     }
 
     @Override
-    public TachePlanifie createTachePlanifie(TachePlanifie tachePlanifie, int siteId) {
+    public TachePlanifie createTachePlanifie(TachePlanifie tachePlanifie, List<Planifier> planifiers) {
 
-        try {
-            tachePlanifie.setSite(gestionSite.getSiteByID(siteId));
-        } catch (ChangeSetPersister.NotFoundException e) {
-            throw new RuntimeException(e);
+
+        frequenceRepository.save(tachePlanifie.getFrequence());
+        tachePlanifie.setStatut(TachePlanifie.StatutTache.PLANIFIEE);
+        TachePlanifie tp =  tachePlanifieRepository.save(tachePlanifie);
+
+        List<Planifier> list = new ArrayList<>();
+
+        for (Planifier planifier:planifiers){
+
+            planifier.setTachePlanifie(tp);
+            planifierRepository.save(planifier);
+
+            list.add(planifierRepository.save(planifier));
         }
 
+        TachePlanifie tptp = tachePlanifieRepository.findById(tp.getId_tachePlanifie()).get();
 
-        tachePlanifie.setStatut(TachePlanifie.StatutTache.PLANIFIEE);
+        tptp.setPlanifiers(list);
+
+
         logger.info("TachePlanifie successfully created: "+tachePlanifie.toString());
-        return tachePlanifieRepository.save(tachePlanifie);
+
+        return tachePlanifieRepository.save(tptp);
     }
 
     @Override
@@ -189,7 +205,7 @@ public class GestionPlanningImpl implements GestionPlanning{
     }
 
     @Override
-    public TachePlanifie reporterTachePlanifie(int idTachePlanifie, Date dateReporte) {
+    public TachePlanifie reporterTachePlanifie(int idTachePlanifie, LocalDate dateReporte) {
 
         TachePlanifie t = tachePlanifieRepository.findById(idTachePlanifie).get();
         t.setDatePrevu(dateReporte);
@@ -216,6 +232,15 @@ public class GestionPlanningImpl implements GestionPlanning{
     public boolean deleteTachePlanifie(int idTachePlanifie) {
         boolean check1=tachePlanifieRepository.existsById(idTachePlanifie);
         if(check1) {
+
+            TachePlanifie tachePlanifie = tachePlanifieRepository.findById(idTachePlanifie).get();
+
+            for (Planifier planifier:tachePlanifie.getPlanifiers()) {
+                planifierRepository.deleteById(planifier.getId_Planifier());
+            }
+
+            frequenceRepository.deleteById(tachePlanifie.getFrequence().getId_frequence());
+
             tachePlanifieRepository.deleteById(idTachePlanifie);
 
             logger.info("TachePlanifie was successfully deleted ");
@@ -286,5 +311,43 @@ public class GestionPlanningImpl implements GestionPlanning{
     public List<FicheIntervention> getFicheIntervention() {
         return ficheInterventionRepository.findAll();
     }
+
+
+
+    @Override
+    public List<Planifier> getPlanifiersByTacheId(int tachePlanifieId) {
+        try {
+            // Récupérer la tâche planifiée avec ses planifiers
+            TachePlanifie tachePlanifie = tachePlanifieRepository.findById(tachePlanifieId)
+                    .orElseThrow(() -> new RuntimeException("Tâche planifiée non trouvée"));
+
+            // Récupérer tous les planifiers associés à cette tâche
+            List<Planifier> planifiers = planifierRepository.findByTachePlanifie(tachePlanifie);
+
+            // Pour chaque planifier, s'assurer que le site et ses équipements sont bien chargés
+            for (Planifier planifier : planifiers) {
+                if (planifier.getSite() != null) {
+                    // Forcer le chargement des équipements installés pour chaque site
+                    Hibernate.initialize(planifier.getSite().getEquipementInstalles());
+
+                    // Pour chaque équipement installé, charger les détails de l'équipement
+                    if (planifier.getSite().getEquipementInstalles() != null) {
+                        for (EquipementInstalle equipementInstalle : planifier.getSite().getEquipementInstalles()) {
+                            Hibernate.initialize(equipementInstalle.getEquipement());
+                        }
+                    }
+                }
+            }
+
+            logger.info("Planifiers récupérés avec succès: " + planifiers.size() + " planifier(s)");
+            return planifiers;
+
+        } catch (Exception e) {
+            logger.error("Erreur lors de la récupération des planifiers pour la tâche " + tachePlanifieId, e);
+            throw new RuntimeException("Erreur lors de la récupération des planifiers", e);
+        }
+    }
+
+
 
 }

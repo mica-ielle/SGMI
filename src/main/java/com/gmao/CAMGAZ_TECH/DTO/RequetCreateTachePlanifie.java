@@ -1,5 +1,6 @@
 package com.gmao.CAMGAZ_TECH.DTO;
 
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.Planifier;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.TachePlanifie;
 
 import java.util.List;
@@ -7,11 +8,11 @@ import java.util.List;
 public class RequetCreateTachePlanifie {
 
     private TachePlanifie tachePlanifie;
-    private int siteId;
+    private List<Planifier> planifiers;
 
-    public RequetCreateTachePlanifie(TachePlanifie tachePlanifie, int siteId) {
+    public RequetCreateTachePlanifie(TachePlanifie tachePlanifie, List<Planifier> planifiers) {
         this.tachePlanifie = tachePlanifie;
-        this.siteId = siteId;
+        this.planifiers = planifiers;
     }
 
     public TachePlanifie getTachePlanifie() {
@@ -22,11 +23,11 @@ public class RequetCreateTachePlanifie {
         this.tachePlanifie = tachePlanifie;
     }
 
-    public int getSiteId() {
-        return siteId;
+    public List<Planifier> getPlanifiers() {
+        return planifiers;
     }
 
-    public void setSiteId(int siteId) {
-        this.siteId = siteId;
+    public void setPlanifiers(List<Planifier> planifiers) {
+        this.planifiers = planifiers;
     }
 }

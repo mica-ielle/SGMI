@@ -6,6 +6,7 @@ import com.gmao.CAMGAZ_TECH.DTO.RequetGetPlanning;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.FicheIntervention;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.Planifier;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.TachePlanifie;
 import com.gmao.CAMGAZ_TECH.service.gestion_planning.GestionPlanningImpl;
 import org.slf4j.Logger;
@@ -14,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,8 +48,10 @@ public class PlanningController {
     @PostMapping("/tachePlanifie")
     public TachePlanifie create(@RequestBody RequetCreateTachePlanifie requetCreateTachePlanifie)
     {
+        logger.info("planifier __ "+requetCreateTachePlanifie.getPlanifiers());
+
         logger.info(requetCreateTachePlanifie.toString());
-        return service.createTachePlanifie(requetCreateTachePlanifie.getTachePlanifie(),requetCreateTachePlanifie.getSiteId());
+        return service.createTachePlanifie(requetCreateTachePlanifie.getTachePlanifie(),requetCreateTachePlanifie.getPlanifiers());
     }
 
     @PutMapping("/affecte/{tachePlanifieId}")
@@ -56,7 +61,7 @@ public class PlanningController {
     }
 
     @PutMapping("/reporte/{tachePlanifieId}")
-    public TachePlanifie reporte(@PathVariable int tachePlanifieId, @RequestBody Date dateReporte)
+    public TachePlanifie reporte(@PathVariable int tachePlanifieId, @RequestBody LocalDate dateReporte)
     {
         return service.reporterTachePlanifie(tachePlanifieId,dateReporte);
     }
@@ -115,5 +120,14 @@ public class PlanningController {
     {
         return service.updateTachePlanifie(tachePlanifieId, tachePlanifie);
     }
+
+
+    @GetMapping("/taches/{tachePlanifieId}/planifiers")
+    public List<Planifier> getPlanifiersByTacheId(@PathVariable int tachePlanifieId) {
+        logger.info("Récupération des planifiers pour la tâche: " + tachePlanifieId);
+        return service.getPlanifiersByTacheId(tachePlanifieId);
+    }
+
+
 
 }

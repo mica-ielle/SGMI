@@ -59,11 +59,11 @@ public class ControllerSite {
     }
 
 
-    @GetMapping("/getByTp/{idTp}")
-    public Site getByTp(@PathVariable int idTp)
-    {
-        Site site = service.findSiteByTp(idTp);
-        return site;
-    }
+//    @GetMapping("/getByTp/{idTp}")
+//    public List<Site> getByTp(@PathVariable int idTp)
+//    {
+//        List<Site> sites = service.findSiteByTp(idTp);
+//        return sites;
+//    }
 
 }

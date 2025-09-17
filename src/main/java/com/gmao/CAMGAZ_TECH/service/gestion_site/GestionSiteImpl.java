@@ -2,8 +2,10 @@ package com.gmao.CAMGAZ_TECH.service.gestion_site;
 
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.Planifier;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.EquipementInstalle;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.Site;
+import com.gmao.CAMGAZ_TECH.repository.gestion_planning.PlanifierRepository;
 import com.gmao.CAMGAZ_TECH.repository.gestion_planning.TachePlanifieRepository;
 import com.gmao.CAMGAZ_TECH.repository.gestion_site.EquipementInstalleRepository;
 import com.gmao.CAMGAZ_TECH.repository.gestion_site.SiteRepository;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +31,7 @@ public class GestionSiteImpl implements GestionSite{
     private final SiteRepository siteRepository;
     private final EquipementInstalleRepository equipementInstalleRepository;
     private final TachePlanifieRepository tachePlanifieRepository;
+    private final PlanifierRepository planifierRepository;
 
     @Autowired
     private GestionPlanningImpl gestionPlanning;
@@ -40,15 +44,16 @@ public class GestionSiteImpl implements GestionSite{
     @Autowired
     public GestionEquipementsImpl service_equipement;
     @Autowired
-    public GestionSiteImpl(SiteRepository siteRepository, EquipementInstalleRepository equipementInstalleRepository, TachePlanifieRepository tachePlanifieRepository) {
+    public GestionSiteImpl(SiteRepository siteRepository, EquipementInstalleRepository equipementInstalleRepository, TachePlanifieRepository tachePlanifieRepository, PlanifierRepository planifierRepository) {
         this.siteRepository = siteRepository;
         this.equipementInstalleRepository = equipementInstalleRepository;
         this.tachePlanifieRepository = tachePlanifieRepository;
+        this.planifierRepository = planifierRepository;
     }
 
 
     @Override
-    public Site createSite(Site site, List<Integer> equipementIdList, Date dateInstall, Map<Integer,Date> dateMap) {
+    public Site createSite(Site site, List<Integer> equipementIdList, LocalDate dateInstall, Map<Integer,LocalDate> dateMap) {
 
         Site s = siteRepository.save(site);
 
@@ -174,6 +179,10 @@ public class GestionSiteImpl implements GestionSite{
                 for (EquipementInstalle equipementInstalle:site.getEquipementInstalles()) {
                     equipementInstalleRepository.deleteById(equipementInstalle.getId_equipementInstalle());
                 }
+                for (Planifier planifier:site.getPlanifies()) {
+                    planifierRepository.deleteById(planifier.getId_Planifier());
+                }
+
 
                 siteRepository.deleteById(siteId);
 
@@ -197,7 +206,7 @@ public class GestionSiteImpl implements GestionSite{
     }
 
     @Override
-    public List<EquipementInstalle> installEquipement(int siteId, List<Integer> equipementsId, List<Date> datesInstall) {
+    public List<EquipementInstalle> installEquipement(int siteId, List<Integer> equipementsId, List<LocalDate> datesInstall) {
 
         List<EquipementInstalle> list = new ArrayList<>();
 
@@ -228,10 +237,10 @@ public class GestionSiteImpl implements GestionSite{
     }
 
 
-    @Override
-    public Site findSiteByTp(int idTp) {
-        return siteRepository.findBytachePlanifies(tachePlanifieRepository.findById(idTp).get());
-    }
+//    @Override
+//    public List<Site> findSiteByTp(int idTp) {
+//        return siteRepository.findBytachePlanifies(tachePlanifieRepository.findById(idTp).get());
+//    }
 
     @Override
     public Site findSiteByEi(int idE) {

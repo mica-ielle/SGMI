@@ -1,6 +1,7 @@
 package com.gmao.CAMGAZ_TECH.model.gestion_planning;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
@@ -10,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDate;
 import java.time.LocalDate;
 import java.util.List;
 

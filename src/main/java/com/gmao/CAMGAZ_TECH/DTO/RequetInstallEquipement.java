@@ -1,13 +1,14 @@
 package com.gmao.CAMGAZ_TECH.DTO;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 public class RequetInstallEquipement {
 
     private int siteId;
     private List<Integer> equipementsId;
-    private List<Date> datesInstall;
+    private List<LocalDate> datesInstall;
 
     public int getSiteId() {
         return siteId;
@@ -25,11 +26,11 @@ public class RequetInstallEquipement {
         this.equipementsId = equipementsId;
     }
 
-    public List<Date> getDatesInstall() {
+    public List<LocalDate> getDatesInstall() {
         return datesInstall;
     }
 
-    public void setDatesInstall(List<Date> datesInstall) {
+    public void setDatesInstall(List<LocalDate> datesInstall) {
         this.datesInstall = datesInstall;
     }
 }

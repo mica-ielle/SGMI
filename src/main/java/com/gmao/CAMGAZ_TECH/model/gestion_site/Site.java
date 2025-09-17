@@ -1,6 +1,10 @@
 package com.gmao.CAMGAZ_TECH.model.gestion_site;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
+import com.gmao.CAMGAZ_TECH.model.gestion_planning.Planifier;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.TachePlanifie;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -24,10 +28,11 @@ public class Site {
     private String tel_contact;
 
 
-    @OneToMany(mappedBy = "site")
-    private List<TachePlanifie> tachePlanifies;
+    @OneToMany(mappedBy = "site", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Planifier> planifies;
 
-    @OneToMany(mappedBy = "site")
+    @OneToMany(mappedBy = "site", fetch = FetchType.LAZY)
     private List<EquipementInstalle> equipementInstalles;
 
     public int getId_site() {
@@ -78,11 +83,11 @@ public class Site {
         this.equipementInstalles = equipementInstalles;
     }
 
-    public List<TachePlanifie> getTachePlanifies() {
-        return tachePlanifies;
+    public List<Planifier> getPlanifies() {
+        return planifies;
     }
 
-    public void setTachePlanifies(List<TachePlanifie> tachePlanifies) {
-        this.tachePlanifies = tachePlanifies;
+    public void setPlanifies(List<Planifier> planifies) {
+        this.planifies = planifies;
     }
 }

@@ -5,11 +5,12 @@ import com.gmao.CAMGAZ_TECH.model.gestion_site.Site;
 import org.springframework.data.crossstore.ChangeSetPersister;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 public interface GestionSite {
-    public Site createSite(Site site, List<Integer> equipementIdList, Date dateInstall, Map<Integer,Date> dateMap);
+    public Site createSite(Site site, List<Integer> equipementIdList, LocalDate dateInstall, Map<Integer,LocalDate> dateMap);
 
     public Site getSiteByID(int siteID) throws ChangeSetPersister.NotFoundException;
 
@@ -20,9 +21,9 @@ public interface GestionSite {
     public List<Site> findAllSites() ;
 
 
-    public List<EquipementInstalle> installEquipement(int siteId, List<Integer> equipementsId, List<Date> datesInstall);
+    public List<EquipementInstalle> installEquipement(int siteId, List<Integer> equipementsId, List<LocalDate> datesInstall);
 
-    public Site findSiteByTp(int idTp);
+//    public List<Site> findSiteByTp(int idTp);
 
     public Site findSiteByEi(int idE);
 }

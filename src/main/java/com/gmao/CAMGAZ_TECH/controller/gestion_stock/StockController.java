@@ -1,5 +1,6 @@
 package com.gmao.CAMGAZ_TECH.controller.gestion_stock;
 
+import com.gmao.CAMGAZ_TECH.DTO.RequetCreatePiece;
 import com.gmao.CAMGAZ_TECH.DTO.RequetCreateStock;
 import com.gmao.CAMGAZ_TECH.DTO.SortieStock;
 import com.gmao.CAMGAZ_TECH.model.gestion_stock.Stock;
@@ -27,6 +28,13 @@ public class StockController {
     {
         return service.createStock(requetCreateStock.getStock(),requetCreateStock.getPieceID());
     }
+
+    @PostMapping("/create/piece")
+    public Stock createPiece(@RequestBody RequetCreatePiece requetCreatePiece)
+    {
+        return service.createPiece(requetCreatePiece.getPiece(),requetCreatePiece.getStock());
+    }
+
 
     @GetMapping("/get")
     public List<Stock> get()

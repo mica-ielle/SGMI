@@ -50,6 +50,21 @@ public class GestionStockImpl implements GestionStock{
 
     }
 
+
+    @Override
+    public Stock createPiece(Piece piece, Stock stock) {
+
+        pieceRepository.save(piece);
+
+        stock.setPiece(piece);
+
+        return stockRepository.save(stock);
+    }
+
+
+
+
+
     @Override
     public Stock getStockByID(int stockId) throws ChangeSetPersister.NotFoundException {
         //check if a stock with this id exist
