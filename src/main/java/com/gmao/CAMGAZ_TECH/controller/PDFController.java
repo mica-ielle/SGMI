@@ -335,10 +335,10 @@ public class PDFController {
 
         // Données (simulation car la structure exacte des pièces n'est pas claire)
         fiche.getPiecesRemplacees().forEach(piece -> {
-            addTableCell(partsTable, piece.toString(), normalFont);
-            addTableCell(partsTable, "1", normalFont); // Quantité par défaut
-            addTableCell(partsTable, "€ 0.00", normalFont); // Prix par défaut
-            addTableCell(partsTable, "€ 0.00", normalFont); // Total par défaut
+            addTableCell(partsTable, piece.getNom(), normalFont);
+            addTableCell(partsTable, String.valueOf(piece.getQuantiteUtilisee()), normalFont); // Quantité par défaut
+            addTableCell(partsTable, String.valueOf(piece.getPrixUnitaire()), normalFont); // Prix par défaut
+            addTableCell(partsTable, String.valueOf(piece.getCoutTotal()), normalFont); // Total par défaut
         });
 
         document.add(partsTable);
