@@ -12,6 +12,7 @@ import com.gmao.CAMGAZ_TECH.repository.gestion_stock.PieceRepository;
 import com.gmao.CAMGAZ_TECH.service.gestion_equipement.GestionEquipementsImpl;
 import com.gmao.CAMGAZ_TECH.service.gestion_site.GestionSiteImpl;
 import com.gmao.CAMGAZ_TECH.service.gestion_stock.GestionStockImpl;
+import jakarta.transaction.Transactional;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class GestionPlanningImpl implements GestionPlanning{
@@ -160,37 +162,62 @@ public class GestionPlanningImpl implements GestionPlanning{
     }
 
 
+
     @Override
     public List<OccurenceMainteance> getPlanningTableau() {
         return null;
     }
 
     @Override
-    public TachePlanifie createTachePlanifie(TachePlanifie tachePlanifie, List<Planifier> planifiers) {
+    @Transactional
+    public List<TachePlanifie> createTachePlanifie(TachePlanifie tachePlanifie, List<Planifier> planifiers) {
+        List<TachePlanifie> tachePlanifies = new ArrayList<>();
 
+        // Sauvegarder la fréquence une seule fois
+        Frequence frequence = frequenceRepository.save(tachePlanifie.getFrequence());
 
-        frequenceRepository.save(tachePlanifie.getFrequence());
-        tachePlanifie.setStatut(TachePlanifie.StatutTache.PLANIFIEE);
-        TachePlanifie tp =  tachePlanifieRepository.save(tachePlanifie);
+        LocalDate origine = tachePlanifie.getDatePrevu();
+        LocalDate prochaineDate = origine;
+        Period intervalle = calculerIntervalle(frequence);
+        LocalDate fin = origine.plusYears(3);
 
-        List<Planifier> list = new ArrayList<>();
+        while (prochaineDate.isBefore(fin)) {
+            // Créer une nouvelle instance de TachePlanifie à chaque itération
+            TachePlanifie nouvelleTache = new TachePlanifie();
+            nouvelleTache.setDatePrevu(prochaineDate);
+            nouvelleTache.setFrequence(frequence);
+            nouvelleTache.setStatut(TachePlanifie.StatutTache.PLANIFIEE);
+            // Copie des autres champs si nécessaire (ex: équipement, utilisateur, etc.)
+            nouvelleTache.setNom(tachePlanifie.getNom());
+            nouvelleTache.setResponsable(tachePlanifie.getResponsable());
+            nouvelleTache.setType(tachePlanifie.getType());
+            nouvelleTache.setDernierIntervention(tachePlanifie.getDernierIntervention());
+            // ... autres champs à copier
 
-        for (Planifier planifier:planifiers){
+            TachePlanifie savedTache = tachePlanifieRepository.save(nouvelleTache);
 
-            planifier.setTachePlanifie(tp);
-            planifierRepository.save(planifier);
+            List<Planifier> planifiersAssocies = new ArrayList<>();
+            for (Planifier planifier : planifiers) {
+                Planifier nouveauPlanifier = new Planifier();
+                // Copier les champs nécessaires
+                nouveauPlanifier.setDatePlanifie(planifier.getDatePlanifie());
+                nouveauPlanifier.setSite(planifier.getSite());
+                // ... autres champs à copier
+                nouveauPlanifier.setTachePlanifie(savedTache);
 
-            list.add(planifierRepository.save(planifier));
+                planifiersAssocies.add(planifierRepository.save(nouveauPlanifier));
+            }
+
+            savedTache.setPlanifiers(planifiersAssocies);
+            tachePlanifieRepository.save(savedTache); // mise à jour avec les planifiers
+
+            tachePlanifies.add(savedTache);
+            prochaineDate = prochaineDate.plus(intervalle);
+
+            logger.info("TachePlanifie créée à la date : " + prochaineDate);
         }
 
-        TachePlanifie tptp = tachePlanifieRepository.findById(tp.getId_tachePlanifie()).get();
-
-        tptp.setPlanifiers(list);
-
-
-        logger.info("TachePlanifie successfully created: "+tachePlanifie.toString());
-
-        return tachePlanifieRepository.save(tptp);
+        return tachePlanifies;
     }
 
     @Override
@@ -229,27 +256,33 @@ public class GestionPlanningImpl implements GestionPlanning{
     }
 
     @Override
+    @Transactional
     public boolean deleteTachePlanifie(int idTachePlanifie) {
-        boolean check1=tachePlanifieRepository.existsById(idTachePlanifie);
-        if(check1) {
+        Optional<TachePlanifie> optionalTache = tachePlanifieRepository.findById(idTachePlanifie);
 
-            TachePlanifie tachePlanifie = tachePlanifieRepository.findById(idTachePlanifie).get();
-
-            for (Planifier planifier:tachePlanifie.getPlanifiers()) {
-                planifierRepository.deleteById(planifier.getId_Planifier());
-            }
-
-            frequenceRepository.deleteById(tachePlanifie.getFrequence().getId_frequence());
-
-            tachePlanifieRepository.deleteById(idTachePlanifie);
-
-            logger.info("TachePlanifie was successfully deleted ");
-            return true;
-        }
-        else {
-            logger.info("TachePlanifie does not exist ");
+        if (optionalTache.isEmpty()) {
+            logger.info("TachePlanifie does not exist");
             return false;
         }
+
+        TachePlanifie tachePlanifie = optionalTache.get();
+
+        // Supprimer les planifications liées
+        for (Planifier planifier : tachePlanifie.getPlanifiers()) {
+            planifierRepository.delete(planifier);
+        }
+
+        // Supprimer la fréquence si elle existe
+        Frequence frequence = tachePlanifie.getFrequence();
+        if (frequence != null) {
+            frequenceRepository.delete(frequence);
+        }
+
+        // Supprimer la tâche planifiée
+        tachePlanifieRepository.delete(tachePlanifie);
+
+        logger.info("TachePlanifie was successfully deleted");
+        return true;
     }
 
     @Override
@@ -348,6 +381,10 @@ public class GestionPlanningImpl implements GestionPlanning{
         }
     }
 
+    @Override
+    public boolean deleteOccurence(int tachePlanifieId) {
+        return occurenceMaintenanceRepository.existsById(tachePlanifieId);
+    }
 
 
 }

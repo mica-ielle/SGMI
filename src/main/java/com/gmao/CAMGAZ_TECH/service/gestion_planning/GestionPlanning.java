@@ -20,7 +20,7 @@ public interface GestionPlanning {
     public List<OccurenceMainteance> getPlanningTableau();
 
     //actions sur les taches
-    public TachePlanifie createTachePlanifie(TachePlanifie tachePlanifie, List<Planifier> planifiers);
+    public List<TachePlanifie> createTachePlanifie(TachePlanifie tachePlanifie, List<Planifier> planifiers);
     public TachePlanifie affecteTachePlanifie(int idTachePlanifie, String nom);
     public TachePlanifie reporterTachePlanifie(int idTachePlanifie, LocalDate dateReporte);
     public TachePlanifie annuleTachePlanifie(int idTachePlanifie);
@@ -46,4 +46,5 @@ public interface GestionPlanning {
     public List<Planifier> getPlanifiersByTacheId(int tachePlanifieId);
 
 
+    public boolean deleteOccurence(int tachePlanifieId);
 }

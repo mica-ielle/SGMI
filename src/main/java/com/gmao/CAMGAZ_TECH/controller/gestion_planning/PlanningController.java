@@ -46,7 +46,7 @@ public class PlanningController {
     }
 
     @PostMapping("/tachePlanifie")
-    public TachePlanifie create(@RequestBody RequetCreateTachePlanifie requetCreateTachePlanifie)
+    public List<TachePlanifie> create(@RequestBody RequetCreateTachePlanifie requetCreateTachePlanifie)
     {
         logger.info("planifier __ "+requetCreateTachePlanifie.getPlanifiers());
 
@@ -84,6 +84,11 @@ public class PlanningController {
         return service.deleteTachePlanifie(tachePlanifieId);
     }
 
+    @DeleteMapping("/deleteOccurence/{tachePlanifieId}")
+    public boolean deleteOccurence(@PathVariable int tachePlanifieId)
+    {
+        return service.deleteOccurence(tachePlanifieId);
+    }
 
 
     @PostMapping("/ficheIntervention")

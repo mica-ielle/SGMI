@@ -76,7 +76,8 @@ public class GestionSiteImpl implements GestionSite{
 
             OccurenceMainteance occurenceMainteanceSite = new OccurenceMainteance();
             occurenceMainteanceSite.setStatut(OccurenceMainteance.StatutMaintenance.PLANIFIEE);
-            occurenceMainteanceSite.setDatePrevue(LocalDate.now());
+
+            occurenceMainteanceSite.setDatePrevue(dateInstall);
 
             gestionPlanning.createOccurenceMainteance(occurenceMainteanceSite,equipementId);
 
