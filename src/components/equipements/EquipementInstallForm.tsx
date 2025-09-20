@@ -13,7 +13,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { CalendarIcon, Settings, Package, MapPin, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import type { Site, Equipement, TypeEquipement } from '../../types';
 import { equipementService } from '../../services/equipementService';
 import { siteService } from '../../services/siteService';
@@ -234,30 +234,21 @@ export const EquipementInstallForm = ({ open, onOpenChange, site, onSuccess }: E
                             {isSelected && (
                               <div className="flex items-center gap-2">
                                 <Label className="text-sm">Date d'installation:</Label>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      <CalendarIcon className="w-4 h-4 mr-2" />
-                                      {installationDate ? 
-                                        format(installationDate, 'dd/MM/yyyy', { locale: fr }) : 
-                                        'Sélectionner'
+                                  <input
+                                    type="date"
+                                    id={`installation-date-${equipement.id_equipement}`}
+                                    className="border rounded px-2 py-1 text-sm"
+                                    value={installationDate ? format(installationDate, 'yyyy-MM-dd') : ''}
+                                    onChange={(e) => {
+                                      const selectedDate = e.target.value ? new Date(e.target.value) : null;
+                                      if (selectedDate) {
+                                        setInstallationDate(groupIndex, equipement.id_equipement!, selectedDate);
                                       }
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                      mode="single"
-                                      selected={installationDate}
-                                      onSelect={(date) => {
-                                        if (date) {
-                                          setInstallationDate(groupIndex, equipement.id_equipement!, date);
-                                        }
-                                      }}
-                                      initialFocus
-                                    />
-                                  </PopoverContent>
-                                </Popover>
+                                    }}
+                                  />
+
                               </div>
+                              
                             )}
                           </div>
 

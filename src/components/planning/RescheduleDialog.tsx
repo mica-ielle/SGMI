@@ -79,23 +79,20 @@ export const RescheduleDialog = ({
 
           <div>
             <Label>Nouvelle date prévue *</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start mt-2">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
-                  initialFocus
-                  disabled={(date) => date < new Date()}
-                />
-              </PopoverContent>
-            </Popover>
+              <input
+    type="date"
+    id="selected-date"
+    className="w-full border rounded px-2 py-1 mt-1 text-sm"
+    value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
+    min={format(new Date(), 'yyyy-MM-dd')} // désactive les dates passées
+    onChange={(e) => {
+      const date = e.target.value ? new Date(e.target.value) : null;
+      if (date) {
+        setSelectedDate(date);
+      }
+    }}
+  />
+
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

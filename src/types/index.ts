@@ -72,6 +72,14 @@ export enum TypeTachePlanifie {
   PREVENTIF = 'PREVENTIF'
 }
 
+
+export interface OccurrenceFuture {
+  date: string;
+  tache: TachePlanifie;
+  site: Site;
+  isOverdue?: boolean;
+  daysFromNow?: number;
+}
 // ✅ INTERFACE PLANIFIER (NOUVELLE STRUCTURE JAVA)
 export interface Planifier {
   id_Planifier: number;

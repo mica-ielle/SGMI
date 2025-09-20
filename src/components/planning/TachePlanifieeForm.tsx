@@ -53,12 +53,18 @@ const calculerProchaineMaintenance = (dateDerniereIntervention: string, frequenc
           return format(addWeeks(dateBase, 1), 'yyyy-MM-dd');
         case 'MENSUELLE':
           return format(addMonths(dateBase, 1), 'yyyy-MM-dd');
+        case 'BIMENSUELLE':
+          return format(addMonths(dateBase, 2), 'yyyy-MM-dd');
         case 'TRIMESTRIELLE':
           return format(addMonths(dateBase, 3), 'yyyy-MM-dd');
         case 'SEMESTRIELLE':
           return format(addMonths(dateBase, 6), 'yyyy-MM-dd');
         case 'ANNUELLE':
           return format(addYears(dateBase, 1), 'yyyy-MM-dd');
+        case 'CINQ_ANS':
+          return format(addYears(dateBase, 5), 'yyyy-MM-dd');
+        case 'DIX_ANS':
+          return format(addYears(dateBase, 10), 'yyyy-MM-dd');
         default:
           return '';
       }
@@ -463,7 +469,7 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
                                         <div className="flex items-center gap-2">
                                           <CalendarIcon className="w-4 h-4 text-blue-600" />
                                           <span className="text-sm font-medium text-blue-700">
-                                            {format(parseISO(prochaineDate), 'dd/MM/yyyy', { locale: fr })}
+                                            {format(parseISO(prochaineDate), 'dd/MM/yyyy', { locale: fr })}                                        
                                           </span>
                                         </div>
                                       </div>

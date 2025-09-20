@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { EquipementInstallForm } from '../components/equipements/EquipementInstallForm';
 import { siteService } from '../services/siteService';
 import { equipementService } from '../services/equipementService';
-import { toast } from 'sonner@2.0.3';
+import { toast } from '../utils/toast';
 import type { Site, Equipement, RequetCreateSite, TypeEquipement } from '../types';
 
 const typeEquipementLabels: Record<TypeEquipement, string> = {
@@ -58,6 +58,7 @@ export const SitesPage = () => {
       setEquipements(equipementsData);
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setIsLoading(false);
     }
@@ -69,6 +70,7 @@ export const SitesPage = () => {
       if (editingSite) {
         // TODO: Implémentation de la mise à jour
         console.log('Mise à jour site:', formData);
+        toast.success('Site mis à jour avec succès');
       } else {
         const createData: RequetCreateSite = {
           site: formData,
@@ -77,6 +79,7 @@ export const SitesPage = () => {
           dateMap: equipementsDatesInstallation
         };
         await siteService.create(createData);
+        toast.success('Site créé avec succès');
       }
       
       await loadData();
@@ -84,6 +87,7 @@ export const SitesPage = () => {
       resetForm();
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      toast.error('Erreur lors de la sauvegarde');
     }
   };
 
@@ -92,6 +96,7 @@ export const SitesPage = () => {
       try {
         await siteService.delete(id);
         await loadData();
+        toast.success('Site supprimé avec succès');
       } catch (error) {
         console.error('Erreur lors de la suppression:', error);
         toast.error('Erreur lors de la suppression');
@@ -108,7 +113,7 @@ export const SitesPage = () => {
 
   const handleInstallSuccess = () => {
     loadData();
-    toast.success('Équipements installés avec succès');
+    toast.success('Opération réalisée avec succès');
   };
 
   const resetForm = () => {
@@ -378,7 +383,7 @@ export const SitesPage = () => {
                       setIsInstallDialogOpen(true);
                     }}
                     className="text-purple-600 hover:text-purple-700"
-                    title="Installer des équipements"
+                    title="Gérer les équipements"
                   >
                     <Settings className="w-4 h-4" />
                   </Button>

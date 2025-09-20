@@ -686,12 +686,12 @@ export const TachePlanifieeDetailView = ({
               </Button>
             )}
             
-            <Button variant="outline" className="h-auto py-3">
+            {/* <Button variant="outline" className="h-auto py-3">
               <div className="text-center">
                 <FileText className="w-5 h-5 mx-auto mb-1" />
                 <div className="text-sm">Créer rapport</div>
               </div>
-            </Button>
+            </Button> */}
           </div>
         </div>
 

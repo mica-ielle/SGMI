@@ -38,9 +38,9 @@ export class PlanningService {
     return apiService.put<TachePlanifie>(`${this.endpoint}/taches/${id}`, request.tachePlanifie);
   }
 
-  async createTachePlanifie(createData: RequetCreateTachePlanifie): Promise<TachePlanifie> {
+  async createTachePlanifie(createData: RequetCreateTachePlanifie): Promise<TachePlanifie[]> {
     console.log('Données envoyées au backend:', createData);
-    return apiService.post<TachePlanifie>(`${this.endpoint}/tachePlanifie`, createData);
+    return apiService.post<TachePlanifie[]>(`${this.endpoint}/tachePlanifie`, createData);
   }
 
   async affecterTache(tachePlanifieId: number, nom: string): Promise<TachePlanifie> {
@@ -66,6 +66,13 @@ export class PlanningService {
   async deleteTachePlanifie(tachePlanifieId: number): Promise<boolean> {
     return apiService.delete<boolean>(`${this.endpoint}/delete/${tachePlanifieId}`);
   }
+
+
+  
+    async marquerMaintenanceAffectee(arg0: number):Promise<boolean>{
+    return apiService.delete<boolean>(`${this.endpoint}/deleteOccurence/${arg0}`);
+    }
+
 
   async getAllFichesIntervention(): Promise<FicheIntervention[]> {
     try {
@@ -175,5 +182,9 @@ export class PlanningService {
     }
   }
 }
+
+
+
+
 
 export const planningService = new PlanningService();
