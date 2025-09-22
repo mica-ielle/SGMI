@@ -12,7 +12,16 @@ export enum TypeEquipement {
   MOTOPOMPE = 'MOTOPOMPE',
   BORNE_DE_DISTRIBUTION = 'BORNE_DE_DISTRIBUTION',
   ARMOIRE_ELECTRIQUE = 'ARMOIRE_ELECTRIQUE',
-  CITERNE = 'CITERNE'
+  CITERNE = 'CITERNE',
+  VAPORISATEUR = 'VAPORISATEUR',
+  REGULATEUR = 'REGULATEUR'
+}
+
+export enum TypeInstallation {
+  CARBURATION = 'CARBURATION',
+  VAPORISATION_SIMPLE = 'VAPORISATION_SIMPLE',
+  VAPORISATION_ELECTRIQUE = 'VAPORISATION_ELECTRIQUE',
+  AUTRE = 'AUTRE'
 }
 
 export enum UniteFrequence {
@@ -190,6 +199,8 @@ export interface Site {
   ville: string;
   nom_contact?: string;
   tel_contact?: string;
+  type: string; // TypeInstallation en string - ✅ NOUVEAU CHAMP AJOUTÉ
+  dateCreation?: string; // LocalDate as string "YYYY-MM-DD"
   // ✅ Relations avec les entités Java
   planifies?: Planifier[]; // @JsonIgnore côté Java
   equipementInstalles?: EquipementInstalle[];
@@ -299,6 +310,14 @@ export interface RequetCreateFiche {
   equipementInstalleId?: number;
 }
 
+// ✅ REQUÊTE POUR CRÉER UN SITE MISE À JOUR
+export interface RequetCreateSite {
+  site: Site; // Inclut maintenant le champ 'type'
+  equipementIdList: number[];
+  dateInstall: string; // Date par défaut (non utilisée)
+  dateMap: { [key: number]: string }; // Dates d'installation par équipement
+}
+
 // ✅ INTERFACES UTILITAIRES POUR LA GESTION DES DATES
 
 // Interface pour gérer les sites avec leurs dates individuelles
@@ -361,3 +380,35 @@ export interface SiteAffecte {
   site: Site;
   dateDerniereIntervention: string;
 }
+
+// ✅ UTILITAIRES POUR LES TYPES D'INSTALLATION
+
+// Configuration des équipements par type d'installation
+export interface InstallationConfig {
+  equipements: string[] | 'ALL';
+  obligatoires: string[];
+  optionnels: string[] | 'ALL';
+}
+
+export const INSTALLATION_EQUIPEMENTS: Record<TypeInstallation, InstallationConfig> = {
+  [TypeInstallation.CARBURATION]: {
+    equipements: ['CITERNE', 'MOTOPOMPE', 'BORNE_DE_DISTRIBUTION', 'ARMOIRE_ELECTRIQUE'],
+    obligatoires: ['CITERNE', 'MOTOPOMPE', 'BORNE_DE_DISTRIBUTION'],
+    optionnels: ['ARMOIRE_ELECTRIQUE']
+  },
+  [TypeInstallation.VAPORISATION_SIMPLE]: {
+    equipements: ['CITERNE', 'VAPORISATEUR', 'ARMOIRE_ELECTRIQUE'],
+    obligatoires: ['CITERNE', 'VAPORISATEUR'],
+    optionnels: ['ARMOIRE_ELECTRIQUE']
+  },
+  [TypeInstallation.VAPORISATION_ELECTRIQUE]: {
+    equipements: ['CITERNE', 'VAPORISATEUR', 'REGULATEUR', 'ARMOIRE_ELECTRIQUE'],
+    obligatoires: ['CITERNE', 'VAPORISATEUR', 'REGULATEUR'],
+    optionnels: ['ARMOIRE_ELECTRIQUE']
+  },
+  [TypeInstallation.AUTRE]: {
+    equipements: 'ALL',
+    obligatoires: [],
+    optionnels: 'ALL'
+  }
+};
