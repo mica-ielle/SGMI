@@ -9,6 +9,7 @@ import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.ToString;
 
 import java.time.LocalDate;
@@ -33,6 +34,7 @@ public class OccurenceMainteance {
     @JsonBackReference(value = "occurence-tache")
     private List<Tache> taches;
 
+    @NonNull
     private LocalDate datePrevue;
 
     public  enum StatutMaintenance{

@@ -119,7 +119,11 @@ public class GestionPlanningImpl implements GestionPlanning{
         List<OccurenceMainteance> planning = new ArrayList<>();
 
         for (OccurenceMainteance o:occurenceMainteanceList) {
-            LocalDate origine = LocalDate.from(o.getDatePrevue());
+
+            LocalDate origine = o.getDatePrevue() != null
+                    ? LocalDate.from(o.getDatePrevue())
+                    : LocalDate.now(); // or any default
+
             LocalDate fin = origine.plusYears(3);
 
             /*for (Tache tache : o.getTaches()) {

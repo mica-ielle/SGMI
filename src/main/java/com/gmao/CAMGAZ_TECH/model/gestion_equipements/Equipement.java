@@ -22,7 +22,9 @@ public class Equipement {
         MOTOPOMPE,
         BORNE_DE_DISTRIBUTION,
         ARMOIRE_ELECTRIQUE,
-        CITERNE
+        CITERNE,
+        VAPORISATEUR,
+        REGULATEUR
     }
 
     private TypeEquipement type;

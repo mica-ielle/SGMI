@@ -27,6 +27,15 @@ public class Site {
     private String nom_contact;
     private String tel_contact;
 
+    public enum TypeInstallation {
+        CARBURATION,
+        VAPORISATION_SIMPLE,
+        VAPORISATION_ELECTRIQUE,
+        AUTRE
+    }
+
+    private TypeInstallation type;
+
 
     @OneToMany(mappedBy = "site", fetch = FetchType.LAZY)
     @JsonIgnore
@@ -89,5 +98,13 @@ public class Site {
 
     public void setPlanifies(List<Planifier> planifies) {
         this.planifies = planifies;
+    }
+
+    public TypeInstallation getType() {
+        return type;
+    }
+
+    public void setType(TypeInstallation type) {
+        this.type = type;
     }
 }
