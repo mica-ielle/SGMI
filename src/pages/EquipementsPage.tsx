@@ -24,11 +24,14 @@ import type {
   Frequence
 } from '../types';
 
+// ✅ MISE À JOUR : Ajout des nouveaux types d'équipement VAPORISATEUR et REGULATEUR
 const typeEquipementData = {
   MOTOPOMPE: { label: 'Motopompe', icon: '⚙️', color: 'blue' },
   BORNE_DE_DISTRIBUTION: { label: 'Borne de distribution', icon: '⛽', color: 'green' },
   ARMOIRE_ELECTRIQUE: { label: 'Armoire électrique', icon: '🔌', color: 'yellow' },
-  CITERNE: { label: 'Citerne', icon: '🛢️', color: 'purple' }
+  CITERNE: { label: 'Citerne', icon: '🛢️', color: 'purple' },
+  VAPORISATEUR: { label: 'Vaporisateur', icon: '💨', color: 'cyan' },
+  REGULATEUR: { label: 'Régulateur', icon: '🎛️', color: 'orange' }
 };
 
 const typeTacheLabels: Record<TypeTache, string> = {
@@ -123,8 +126,6 @@ export const EquipementsPage = () => {
     setIsDetailOpen(true);
   };
 
-
-
   const resetForm = () => {
     setFormData({
       type: 'MOTOPOMPE' as TypeEquipement,
@@ -207,6 +208,20 @@ export const EquipementsPage = () => {
       case 'PREVENTIF': return 'bg-orange-100 text-orange-700 border-orange-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
+  };
+
+  // ✅ Fonction helper pour gérer les types d'équipement non définis dans typeEquipementData
+  const getEquipementTypeInfo = (type: string) => {
+    const typeInfo = typeEquipementData[type as keyof typeof typeEquipementData];
+    if (typeInfo) {
+      return typeInfo;
+    }
+    // Fallback pour les types non définis
+    return {
+      label: type.replace('_', ' ').toLowerCase(),
+      icon: '📦',
+      color: 'gray'
+    };
   };
 
   const filteredEquipements = equipements.filter(eq => {
@@ -496,7 +511,7 @@ export const EquipementsPage = () => {
               badge={{ label: data.icon, variant: "outline" }}
             >
               <div className="text-sm text-muted-foreground">
-                {((count / equipements.length) * 100).toFixed(0)}% du total
+                {equipements.length > 0 ? ((count / equipements.length) * 100).toFixed(0) : 0}% du total
               </div>
             </DetailCard>
           );
@@ -505,82 +520,86 @@ export const EquipementsPage = () => {
 
       {/* Liste des équipements */}
       <div className="grid gap-6">
-        {filteredEquipements.map((equipement) => (
-          <DetailCard
-            key={equipement.id_equipement}
-            title={equipement.nom}
-            subtitle={`${typeEquipementData[equipement.type].label} • Réf: ${equipement.reference}`}
-            badge={{
-              label: typeEquipementData[equipement.type].icon + ' ' + typeEquipementData[equipement.type].label,
-              variant: "outline",
-              color: typeEquipementData[equipement.type].color
-            }}
-            actions={{
-              view: () => openDetailView(equipement),
-              edit: () => openEditDialog(equipement),
-              delete: () => handleDelete(equipement.id_equipement!)
-            }}
-            className="hover:shadow-lg transition-all duration-300"
-          >
-            <div className="space-y-4">
-              <InfoGrid columns={3}>
-                <InfoItem
-                  label="Fournisseur"
-                  value={equipement.fournisseur || 'Non renseigné'}
-                  icon={<Package className="w-4 h-4" />}
-                />
-                <InfoItem
-                  label="Tâches définies"
-                  value={`${equipement.taches?.length || 0} tâche(s)`}
-                  icon={<Wrench className="w-4 h-4" />}
-                />
-                <InfoItem
-                  label="Pièces recommandées"
-                  value={`${equipement.pieces?.length || 0} pièce(s)`}
-                  icon={<Package className="w-4 h-4" />}
-                />
-              </InfoGrid>
+        {filteredEquipements.map((equipement) => {
+          const typeInfo = getEquipementTypeInfo(equipement.type);
+          
+          return (
+            <DetailCard
+              key={equipement.id_equipement}
+              title={equipement.nom}
+              subtitle={`${typeInfo.label} • Réf: ${equipement.reference}`}
+              badge={{
+                label: typeInfo.icon + ' ' + typeInfo.label,
+                variant: "outline",
+                color: typeInfo.color
+              }}
+              actions={{
+                view: () => openDetailView(equipement),
+                edit: () => openEditDialog(equipement),
+                delete: () => handleDelete(equipement.id_equipement!)
+              }}
+              className="hover:shadow-lg transition-all duration-300"
+            >
+              <div className="space-y-4">
+                <InfoGrid columns={3}>
+                  <InfoItem
+                    label="Fournisseur"
+                    value={equipement.fournisseur || 'Non renseigné'}
+                    icon={<Package className="w-4 h-4" />}
+                  />
+                  <InfoItem
+                    label="Tâches définies"
+                    value={`${equipement.taches?.length || 0} tâche(s)`}
+                    icon={<Wrench className="w-4 h-4" />}
+                  />
+                  <InfoItem
+                    label="Pièces recommandées"
+                    value={`${equipement.pieces?.length || 0} pièce(s)`}
+                    icon={<Package className="w-4 h-4" />}
+                  />
+                </InfoGrid>
 
-              {/* Tâches preview */}
-              {equipement.taches && equipement.taches.length > 0 && (
-                <div>
-                  <h4 className="font-medium mb-2 flex items-center">
-                    <Wrench className="w-4 h-4 mr-2" />
-                    Tâches de maintenance
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {equipement.taches.slice(0, 3).map((tache, index) => (
-                      <Badge key={index} className={getTaskTypeColor(tache.type)}>
-                        {tache.nom} ({getFrequenceLabel(tache)})
-                      </Badge>
-                    ))}
-                    {equipement.taches.length > 3 && (
-                      <Badge variant="outline">
-                        +{equipement.taches.length - 3} autres
-                      </Badge>
-                    )}
+                {/* Tâches preview */}
+                {equipement.taches && equipement.taches.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2 flex items-center">
+                      <Wrench className="w-4 h-4 mr-2" />
+                      Tâches de maintenance
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {equipement.taches.slice(0, 3).map((tache, index) => (
+                        <Badge key={index} className={getTaskTypeColor(tache.type)}>
+                          {tache.nom} ({getFrequenceLabel(tache)})
+                        </Badge>
+                      ))}
+                      {equipement.taches.length > 3 && (
+                        <Badge variant="outline">
+                          +{equipement.taches.length - 3} autres
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Actions rapides */}
-              {/*<div className="flex flex-wrap gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    // TODO: Navigate to planning
-                    toast.info('Consultez la section Planning pour gérer les maintenances');
-                  }}
-                  className="flex-shrink-0"
-                >
-                  <Settings className="w-4 h-4 mr-1" />
-                  Planifier maintenance
-                </Button>
-              </div>*/}
-            </div>
-          </DetailCard>
-        ))}
+                {/* Actions rapides */}
+                {/*<div className="flex flex-wrap gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // TODO: Navigate to planning
+                      toast.info('Consultez la section Planning pour gérer les maintenances');
+                    }}
+                    className="flex-shrink-0"
+                  >
+                    <Settings className="w-4 h-4 mr-1" />
+                    Planifier maintenance
+                  </Button>
+                </div>*/}
+              </div>
+            </DetailCard>
+          );
+        })}
         
         {filteredEquipements.length === 0 && (
           <DetailCard
@@ -619,8 +638,6 @@ export const EquipementsPage = () => {
           toast.info('Génération du rapport en cours...');
         }}
       />
-
-
     </div>
   );
 };
