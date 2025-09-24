@@ -9,8 +9,10 @@ import com.gmao.CAMGAZ_TECH.model.gestion_planning.TachePlanifie;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.ToString;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -26,6 +28,9 @@ public class Site {
     private String ville;
     private String nom_contact;
     private String tel_contact;
+
+    @NonNull
+    private LocalDate dateCreation;
 
     public enum TypeInstallation {
         CARBURATION,
@@ -106,5 +111,13 @@ public class Site {
 
     public void setType(TypeInstallation type) {
         this.type = type;
+    }
+
+    public LocalDate getDateCreation() {
+        return dateCreation;
+    }
+
+    public void setDateCreation(LocalDate dateCreation) {
+        this.dateCreation = dateCreation;
     }
 }

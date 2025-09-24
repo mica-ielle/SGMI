@@ -9,12 +9,12 @@ import java.util.List;
 public class RequetGetPlanning {
     private OccurenceMainteance occurenceMainteance;
     private Equipement equipement;
-    private List<Tache> tacheList;
+    private Tache tache;
 
-    public RequetGetPlanning(OccurenceMainteance occurenceMainteance, Equipement equipement, List<Tache> tacheList) {
+    public RequetGetPlanning(OccurenceMainteance occurenceMainteance, Equipement equipement, Tache tache) {
         this.occurenceMainteance = occurenceMainteance;
         this.equipement = equipement;
-        this.tacheList = tacheList;
+        this.tache = tache;
     }
 
     public OccurenceMainteance getOccurenceMainteance() {
@@ -33,11 +33,11 @@ public class RequetGetPlanning {
         this.equipement = equipement;
     }
 
-    public List<Tache> getTacheList() {
-        return tacheList;
+    public Tache getTache() {
+        return tache;
     }
 
-    public void setTacheList(List<Tache> tacheList) {
-        this.tacheList = tacheList;
+    public void setTache(Tache tache) {
+        this.tache = tache;
     }
 }

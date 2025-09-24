@@ -51,10 +51,8 @@ public class TachePlanifie {
 
     private TypeTachePlanifie type;
 
-    // ✅ ANNOTATION POUR FORCER LA SÉRIALISATION AU FORMAT ISO
-    @ElementCollection
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private List<LocalDate> dernierIntervention;
+    private LocalDate dernierIntervention;
 
     @ManyToOne
     @JoinColumn(name = "id_frequence")
@@ -112,11 +110,11 @@ public class TachePlanifie {
         this.type = type;
     }
 
-    public List<LocalDate> getDernierIntervention() {
+    public LocalDate getDernierIntervention() {
         return dernierIntervention;
     }
 
-    public void setDernierIntervention(List<LocalDate> dernierIntervention) {
+    public void setDernierIntervention(LocalDate dernierIntervention) {
         this.dernierIntervention = dernierIntervention;
     }
 

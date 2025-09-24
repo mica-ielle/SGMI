@@ -38,7 +38,7 @@ public class PlanningController {
 
         List<OccurenceMainteance> occurenceMainteanceList = service.getPlanningCalendrier();
         for (OccurenceMainteance o:occurenceMainteanceList){
-            RequetGetPlanning requetGetPlanning = new RequetGetPlanning(o, o.getEquipement(), o.getTaches());
+            RequetGetPlanning requetGetPlanning = new RequetGetPlanning(o, o.getEquipementInstalle().getEquipement(), o.getTache());
 
             requetGetPlannings.add(requetGetPlanning);
         }
@@ -48,7 +48,8 @@ public class PlanningController {
     @PostMapping("/tachePlanifie")
     public List<TachePlanifie> create(@RequestBody RequetCreateTachePlanifie requetCreateTachePlanifie)
     {
-        logger.info("planifier __ "+requetCreateTachePlanifie.getPlanifiers());
+        logger.info("___ planifier __ ");
+        logger.info("planifier __ "+requetCreateTachePlanifie.getPlanifiers().toString());
 
         logger.info(requetCreateTachePlanifie.toString());
         return service.createTachePlanifie(requetCreateTachePlanifie.getTachePlanifie(),requetCreateTachePlanifie.getPlanifiers());

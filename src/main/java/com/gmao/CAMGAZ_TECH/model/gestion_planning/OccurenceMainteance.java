@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Frequence;
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
+import com.gmao.CAMGAZ_TECH.model.gestion_site.EquipementInstalle;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -26,13 +28,17 @@ public class OccurenceMainteance {
     private int id_occurenceMainteance;
 
     @ManyToOne
-    @JoinColumn(name = "id_equipement")
-    @JsonBackReference(value = "occurence-equipement")
-    private Equipement equipement;
+    @JoinColumn(name = "id_equipementInstalle")
+    @JsonBackReference(value = "occurence-equipementInstalle")
+    private EquipementInstalle equipementInstalle;
 
-    @OneToMany(mappedBy = "occurenceMainteance")
-    @JsonBackReference(value = "occurence-tache")
-    private List<Tache> taches;
+    @OneToOne
+    @JoinColumn(name = "id_occurenceMainteance")
+    private Tache tache;
+
+    @ManyToOne
+    @JoinColumn(name = "id_frequence")
+    private Frequence frequence;
 
     @NonNull
     private LocalDate datePrevue;
@@ -53,21 +59,20 @@ public class OccurenceMainteance {
         this.id_occurenceMainteance = id_occurenceMainteance;
     }
 
-    public Equipement getEquipement() {
-        return equipement;
+    public EquipementInstalle getEquipementInstalle() {
+        return equipementInstalle;
     }
 
-    public void setEquipement(Equipement equipement) {
-        setTaches(equipement.getTaches());
-        this.equipement = equipement;
+    public void setEquipementInstalle(EquipementInstalle equipementInstalle) {
+        this.equipementInstalle = equipementInstalle;
     }
 
-    public List<Tache> getTaches() {
-        return taches;
+    public Tache getTache() {
+        return tache;
     }
 
-    public void setTaches(List<Tache> taches) {
-        this.taches = taches;
+    public void setTache(Tache tache) {
+        this.tache = tache;
     }
 
     public LocalDate getDatePrevue() {
@@ -84,5 +89,13 @@ public class OccurenceMainteance {
 
     public void setStatut(StatutMaintenance statut) {
         this.statut = statut;
+    }
+
+    public Frequence getFrequence() {
+        return frequence;
+    }
+
+    public void setFrequence(Frequence frequence) {
+        this.frequence = frequence;
     }
 }

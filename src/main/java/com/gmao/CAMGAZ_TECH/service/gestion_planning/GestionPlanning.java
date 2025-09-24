@@ -2,6 +2,7 @@ package com.gmao.CAMGAZ_TECH.service.gestion_planning;
 
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.*;
+import com.gmao.CAMGAZ_TECH.model.gestion_site.EquipementInstalle;
 import com.gmao.CAMGAZ_TECH.model.gestion_stock.Stock;
 
 import java.sql.Date;
@@ -10,7 +11,7 @@ import java.util.List;
 
 public interface GestionPlanning {
 
-    public OccurenceMainteance createOccurenceMainteance(OccurenceMainteance occurenceMainteance, int equipementId);
+    public OccurenceMainteance createOccurenceMainteance(OccurenceMainteance occurenceMainteance, EquipementInstalle equipementI);
 
     //conversion des frequences
     public int frequenceEnMois(int heureTotal, int heureMoyenne);

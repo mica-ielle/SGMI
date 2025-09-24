@@ -25,8 +25,8 @@ public class Tache {
     private Equipement equipement;
     private String nom;
 
-    @ManyToOne
-    @JoinColumn(name = "id_occurenceMainteance")
+    @OneToOne(mappedBy = "tache")
+    @JsonBackReference(value = "tache-occurence")
     private OccurenceMainteance occurenceMainteance;
 
 

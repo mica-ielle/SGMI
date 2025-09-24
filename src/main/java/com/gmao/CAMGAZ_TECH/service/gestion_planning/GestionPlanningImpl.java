@@ -66,36 +66,13 @@ public class GestionPlanningImpl implements GestionPlanning{
 
 
     @Override
-    public OccurenceMainteance createOccurenceMainteance(OccurenceMainteance occurenceMainteancePl, int equipementId) {
+    public OccurenceMainteance createOccurenceMainteance(OccurenceMainteance occurenceMainteancePl, EquipementInstalle equipementI) {
 
 
-        try {
-            occurenceMainteancePl.setEquipement(gestionEquipements.getEquipementByID(equipementId));
-
-            List<Tache> clonedTaches = new ArrayList<>();
-            for (Tache t : occurenceMainteancePl.getTaches()) {
-                Tache clone = t.cloneSansRelations();
-                //clone.setOccurenceMainteance(oc);
-                clonedTaches.add(clone);
-            }
-            occurenceMainteancePl.setTaches(clonedTaches);
-
-        } catch (ChangeSetPersister.NotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
+        occurenceMainteancePl.setEquipementInstalle(equipementI);
 
         OccurenceMainteance oc = occurenceMaintenanceRepository.save(occurenceMainteancePl);
 
-        try {
-            for (Tache t : gestionEquipements.getEquipementByID(equipementId).getTaches()) {
-                updatOccurenceMaintenance(oc.getId_occurenceMainteance(),t);
-
-                logger.info("OccurenceMainteance successfully created: "+oc.getId_occurenceMainteance()+" _ "+t.getId_tache());
-            }
-        } catch (ChangeSetPersister.NotFoundException e) {
-            throw new RuntimeException(e);
-        }
 
         logger.info("OccurenceMainteance successfully created: "+occurenceMainteancePl.toString());
 
@@ -309,6 +286,7 @@ public class GestionPlanningImpl implements GestionPlanning{
 
         TachePlanifie t = tachePlanifieRepository.findById(idTachePlanifie).get();
         t.setStatut(TachePlanifie.StatutTache.REALISEE);
+        t.setDernierIntervention(LocalDate.now());
 
         tachePlanifieRepository.save(t);
 

@@ -1,6 +1,7 @@
 package com.gmao.CAMGAZ_TECH.service.gestion_site;
 
 import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Equipement;
+import com.gmao.CAMGAZ_TECH.model.gestion_equipements.Tache;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.OccurenceMainteance;
 import com.gmao.CAMGAZ_TECH.model.gestion_planning.Planifier;
 import com.gmao.CAMGAZ_TECH.model.gestion_site.EquipementInstalle;
@@ -53,12 +54,13 @@ public class GestionSiteImpl implements GestionSite{
 
 
     @Override
-    public Site createSite(Site site, List<Integer> equipementIdList, LocalDate dateInstall, Map<Integer,LocalDate> dateMap) {
+    public Site createSite(Site site, List<Integer> equipementIdList, LocalDate dateCreation, Map<Integer,LocalDate> dateMap) {
 
+        site.setDateCreation(dateCreation);
         Site s = siteRepository.save(site);
 
 
-       // logger.info("Site ccc: "+site.getEquipementInstalles().size());
+        logger.info("date created: |||| "+dateCreation);
         logger.info("ei created: |||| "+equipementIdList.size());
 
         for (int equipementId:equipementIdList) {
@@ -67,23 +69,35 @@ public class GestionSiteImpl implements GestionSite{
                 e.setSite(getSiteByID(s.getId_site()));
                 Equipement currentEquipement = service_equipement.getEquipementByID(equipementId);
                 e.setEquipement(currentEquipement);
-                e.setDate_installation(dateInstall);
+                e.setDate_installation(dateMap.get(equipementId));
                 e.setDerniere_maintenance(dateMap);
 
             } catch (ChangeSetPersister.NotFoundException ex) {
                 throw new RuntimeException(ex);
             }
 
-            OccurenceMainteance occurenceMainteanceSite = new OccurenceMainteance();
-            occurenceMainteanceSite.setStatut(OccurenceMainteance.StatutMaintenance.PLANIFIEE);
 
-            occurenceMainteanceSite.setDatePrevue(dateInstall);
-
-            gestionPlanning.createOccurenceMainteance(occurenceMainteanceSite,equipementId);
-
-            equipementInstalleRepository.save(e);
+            EquipementInstalle nouvelEquipementInstalle = equipementInstalleRepository.save(e);
             logger.info("ei created: | ");
+
+            for (Tache laTache: e.getEquipement().getTaches()) {
+
+                OccurenceMainteance occurenceMainteanceSite = new OccurenceMainteance();
+                occurenceMainteanceSite.setStatut(OccurenceMainteance.StatutMaintenance.PLANIFIEE);
+
+                occurenceMainteanceSite.setDatePrevue(dateMap.get(equipementId));
+                occurenceMainteanceSite.setTache(laTache);
+                occurenceMainteanceSite.setFrequence(laTache.getFrequence());
+
+                gestionPlanning.createOccurenceMainteance(occurenceMainteanceSite,nouvelEquipementInstalle);
+
+                logger.info("OccurenceMainteance "+occurenceMainteanceSite.toString());
+            }
+
+
         }
+
+
 
         logger.info("Site successfully created: "+site.toString());
         return s;
