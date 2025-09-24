@@ -189,25 +189,10 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
         };
 
         setSelectedPlanifiers(prev => [...prev, newPlanifier]);
-        setFormData(prev => ({
-          ...prev,
-          planifiers: [...(prev.planifiers || []), newPlanifier],
-          dernierIntervention: [...(prev.dernierIntervention || []), dateDefaut]
-        }));
       }
     } else {
       // Retirer le site
-      const planifierToRemove = selectedPlanifiers.find(p => p.site.id_site === siteId);
-      if (planifierToRemove) {
-        const planifierIndex = selectedPlanifiers.findIndex(p => p.site.id_site === siteId);
-        
-        setSelectedPlanifiers(prev => prev.filter(p => p.site.id_site !== siteId));
-        setFormData(prev => ({
-          ...prev,
-          planifiers: prev.planifiers?.filter(p => p.site.id_site !== siteId) || [],
-          dernierIntervention: prev.dernierIntervention?.filter((_, index) => index !== planifierIndex) || []
-        }));
-      }
+      setSelectedPlanifiers(prev => prev.filter(p => p.site.id_site !== siteId));
     }
   };
 
@@ -219,21 +204,6 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
           : p
       )
     );
-    
-    const planifierIndex = selectedPlanifiers.findIndex(p => p.site.id_site === siteId);
-    if (planifierIndex !== -1) {
-      setFormData(prev => ({
-        ...prev,
-        planifiers: prev.planifiers?.map(p => 
-          p.site.id_site === siteId 
-            ? { ...p, datePlanifie: date }
-            : p
-        ) || [],
-        dernierIntervention: prev.dernierIntervention?.map((d, index) => 
-          index === planifierIndex ? date : d
-        ) || []
-      }));
-    }
   };
 
   const handleSubmit = async () => {
@@ -261,26 +231,53 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
         formData.frequence || {}
       );
 
+      // Prendre la première date comme dernière intervention
+      const firstPlanifierDate = selectedPlanifiers[0]?.datePlanifie || format(new Date(), 'yyyy-MM-dd');
+
+      // ✅ CORRECTION : Structurer les données selon le format attendu par le back-end Java
       const dataToSubmit = {
         tachePlanifie: {
-          ...formData,
-          datePrevu
+          // Données de base de la tâche
+          nom: formData.nom.trim(),
+          responsable: formData.responsable || null,
+          statut: formData.statut,
+          type: formData.type,
+          // ✅ Correction : dernierIntervention doit être une date simple, pas un tableau
+          dernierIntervention: firstPlanifierDate,
+          // ✅ Correction : frequence doit être null ou un objet avec id, le back-end la créera
+          frequence: formData.frequence,
+          datePrevu: datePrevu || null
         },
+        // ✅ Correction : Simplifier la structure des planifiers
         planifiers: selectedPlanifiers.map(p => ({
-          site: p.site,
-          datePlanifie: p.datePlanifie
+          site: {
+            id_site: p.site.id_site,
+            nom: p.site.nom,
+            ville: p.site.ville,
+            type: p.site.type,
+            nom_contact: p.site.nom_contact || null,
+            tel_contact: p.site.tel_contact || null,
+            dateCreation: p.site.dateCreation || null
+          },
+          datePlanifie: p.datePlanifie,
+          // Pas besoin d'inclure tachePlanifie ici car il sera assigné côté serveur
         }))
       };
 
+      // ✅ Logging pour debug
+      console.log('=== Données envoyées au serveur ===');
+      console.log('Objet complet:', dataToSubmit);
+      console.log('tachePlanifie:', dataToSubmit.tachePlanifie);
+      console.log('planifiers:', dataToSubmit.planifiers);
+      console.log('Fréquence originale du formulaire:', formData.frequence);
+      console.log('JSON final:', JSON.stringify(dataToSubmit, null, 2));
+
       if (initialData?.id_tachePlanifie) {
         // Pour la mise à jour, utiliser l'endpoint PUT /taches/{id}
-        await planningService.updateTachePlanifie(initialData.id_tachePlanifie, {
-          tachePlanifie: dataToSubmit.tachePlanifie,
-          planifiers: dataToSubmit.planifiers
-        });
+        await planningService.updateTachePlanifie(initialData.id_tachePlanifie, dataToSubmit);
         toast.success('Tâche mise à jour avec succès');
       } else {
-        console.log('Données envoyées:', dataToSubmit);
+      
         await planningService.createTachePlanifie(dataToSubmit);
         toast.success('Tâche créée avec succès');
       }
@@ -288,8 +285,13 @@ export const TachePlanifieeForm = ({ open, onOpenChange, onSuccess, initialData 
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
-      toast.error('Erreur lors de la sauvegarde de la tâche');
+      console.error('=== Erreur lors de la sauvegarde ===');
+      console.error('Erreur complète:', error);
+      if (error instanceof Error) {
+        console.error('Message d\'erreur:', error.message);
+        console.error('Stack trace:', error.stack);
+      }
+      toast.error(`Erreur lors de la sauvegarde: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     } finally {
       setSubmitting(false);
     }

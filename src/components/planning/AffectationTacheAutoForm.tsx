@@ -107,19 +107,19 @@ export const AffectationTacheAutoForm = ({
       // Créer une tâche planifiée à partir de la maintenance automatique
       const tacheData = {
         tachePlanifie: {
-          nom: `Maintenance ${maintenanceAuto.equipement.nom} - ${maintenanceAuto.occurenceMainteance.statut}`,
+          nom: `Maintenance ${maintenanceAuto.equipement.nom} - ${maintenanceAuto.occurenceMainteance.tache?.nom}`,
           type: 'PREVENTIF' as const,
           statut: 'PLANIFIEE' as const,
-          datePrevu: format(affectation.dateIntervention, 'yyyy-MM-dd'),
+          datePrevu: maintenanceAuto.occurenceMainteance.datePrevue,
           responsable: affectation.responsable,
           frequence: {
-            frequenceStandard: 'MENSUELLE' // Valeur par défaut, peut être ajustée
+            frequenceStandard: maintenanceAuto.occurenceMainteance.tache?.frequence?.frequenceStandard
           },
           notes: affectation.notes
         },
         planifiers: [{
           site: sites.find(s => s.id_site === affectation.siteId)!,
-          datePlanifie: format(affectation.dateIntervention, 'yyyy-MM-dd')
+          datePlanifie: maintenanceAuto.occurenceMainteance.datePrevue
         }],
       };
 
@@ -206,7 +206,19 @@ export const AffectationTacheAutoForm = ({
                   <div className="pt-3 border-t border-gray-200">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <div className="text-sm font-medium text-gray-700">Date prévue</div>
+                        <div className="text-sm font-medium text-gray-700">Tâche à effectuer</div>
+                        <div className="text-sm">
+                          {maintenanceAuto.occurenceMainteance.tache?.nom}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-700">Fréquence de la tâche</div>
+                        <div className="text-sm">
+                          {maintenanceAuto.occurenceMainteance.tache?.frequence?.frequenceStandard}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-700">Date initiale</div>
                         <div className="text-sm">
                           {format(new Date(maintenanceAuto.occurenceMainteance.datePrevue), 'dd MMMM yyyy', { locale: fr })}
                         </div>
@@ -294,7 +306,7 @@ export const AffectationTacheAutoForm = ({
           </div>
 
           {/* Date d'intervention */}
-          <div>
+       {/*    <div>
             <Label>Date d'intervention prévue *</Label>
               <input
     type="date"
@@ -313,7 +325,7 @@ export const AffectationTacheAutoForm = ({
     }}
   />
 
-          </div>
+          </div> */}
 
           {/* Priorité */}
          {/*  <div>
@@ -357,7 +369,7 @@ export const AffectationTacheAutoForm = ({
           </div> */}
 
           {/* Notes */}
-          <div>
+          {/* <div>
             <Label htmlFor="notes">Notes d'intervention</Label>
             <Textarea
               id="notes"
@@ -367,7 +379,7 @@ export const AffectationTacheAutoForm = ({
               className="mt-2"
               rows={3}
             />
-          </div>
+          </div> */}
 
           {/* Résumé de l'affectation */}
           {affectation.siteId && affectation.responsable && affectation.dateIntervention && (

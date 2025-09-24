@@ -170,7 +170,8 @@ export const HistoriqueMaintenancesView = ({ onViewIntervention }: HistoriqueMai
         ? `${site.nom} (+${count - 1} autres sites)`
         : `${site.nom} - ${site.ville}`;
     }
-    return tache.site ? `${tache.site.nom} - ${tache.site.ville}` : 'Site non défini';
+    console.log(`${tache.nom} ${tache.site} ___ ${tache.site?.nom} - ${tache.site?.ville}`);
+    return tache.site ? `${tache.site.nom} - ${tache.site.ville}` : ' ';
   };
 
   const handleDownloadReport = async (tache: TachePlanifie) => {
@@ -364,8 +365,8 @@ export const HistoriqueMaintenancesView = ({ onViewIntervention }: HistoriqueMai
                 <InfoItem
                   label="Date de réalisation"
                   value={
-                    tache.dateRealisation
-                      ? format(new Date(tache.dateRealisation), 'dd MMMM yyyy', { locale: fr })
+                    tache.dernierIntervention
+                      ? format(new Date(tache.dernierIntervention), 'dd MMMM yyyy', { locale: fr })
                       : 'Date non renseignée'
                   }
                   icon={<CheckCircle className="w-4 h-4" />}

@@ -726,7 +726,7 @@ export const PlanningAnnuelView = ({ onViewTask }: PlanningAnnuelViewProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => calendarView === 'month' ? navigateMonth('prev') : navigateYear('prev')}
+                  onClick={() => navigateYear('prev')}
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
@@ -741,7 +741,7 @@ export const PlanningAnnuelView = ({ onViewTask }: PlanningAnnuelViewProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => calendarView === 'month' ? navigateMonth('next') : navigateYear('next')}
+                  onClick={() => navigateYear('next')}
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
@@ -771,7 +771,6 @@ export const PlanningAnnuelView = ({ onViewTask }: PlanningAnnuelViewProps) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="calendar">Vue Calendrier</SelectItem>
-              <SelectItem value="list">Vue Liste Détaillée</SelectItem>
             </SelectContent>
           </Select>
 
@@ -781,7 +780,6 @@ export const PlanningAnnuelView = ({ onViewTask }: PlanningAnnuelViewProps) => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="month">Mensuel</SelectItem>
                 <SelectItem value="year">Annuel</SelectItem>
               </SelectContent>
             </Select>

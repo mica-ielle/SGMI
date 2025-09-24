@@ -451,9 +451,13 @@ export const PlanningPage = () => {
     <div className="space-y-6">
       {/* En-tête avec actions */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <div>
+        {/* <div>
           <h1 className="text-2xl font-bold">Planning des maintenances</h1>
           <p className="text-muted-foreground">Gérez vos tâches planifiées et interventions</p>
+        </div> */}
+        <div>
+          <h1 className="text-2xl font-bold"> </h1>
+          <p className="text-muted-foreground"> </p>
         </div>
         
         <div className="flex gap-3">
@@ -787,8 +791,8 @@ export const PlanningPage = () => {
                       icon={<Calendar className="w-4 h-4" />}
                     />
                     <InfoItem
-                      label="Tâches associées"
-                      value={`${maintenance.tacheList?.length || 0} tâche(s)`}
+                      label="Tâche associée"
+                      value={`${maintenance.occurenceMainteance.tache?.nom || 0} `}
                       icon={<Clock className="w-4 h-4" />}
                     />
                   </InfoGrid>

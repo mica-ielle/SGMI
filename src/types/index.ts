@@ -91,7 +91,7 @@ export interface OccurrenceFuture {
 }
 // ✅ INTERFACE PLANIFIER (NOUVELLE STRUCTURE JAVA)
 export interface Planifier {
-  id_Planifier: number;
+  id_Planifier?: number;
   site: Site;
   tachePlanifie?: TachePlanifie; // @JsonIgnore côté Java
   datePlanifie: string; // LocalDate sérialisé en string ISO "YYYY-MM-DD"
@@ -135,8 +135,8 @@ export interface Tache {
 
 export interface OccurenceMainteance {
   id_occurenceMainteance?: number;
-  equipement?: Equipement;
-  taches?: Tache[];
+  equipementInstalle?: EquipementInstalle;
+  tache?: Tache;
   dateCreation?: string; // LocalDate as string
   datePrevue: string; // LocalDate as string
   statut: StatutMaintenance;
@@ -176,7 +176,7 @@ export interface TachePlanifie {
   statut: StatutTache;
   type: TypeTachePlanifie;
   // ✅ List<LocalDate> côté Java -> array de strings ISO côté frontend
-  dernierIntervention?: string[]; // ["2024-01-15", "2024-01-20"]
+  dernierIntervention?: string; // ["2024-01-15", "2024-01-20"]
   frequence?: Frequence;
   datePrevu?: string; // LocalDate as string "YYYY-MM-DD"
   
@@ -275,8 +275,8 @@ export interface AuditLog {
 
 // ✅ Requête pour créer une tâche planifiée (avec planifiers)
 export interface RequetCreateTachePlanifie {
-  tachePlanifie: TachePlanifie;
-  planifiers: Planifier[]; // Nouvelle structure
+  tachePlanifie?: TachePlanifie;
+  planifiers?: Planifier[]; // Nouvelle structure
   // Compatibilité
   siteIds?: number[];
 }

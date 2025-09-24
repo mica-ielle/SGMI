@@ -155,7 +155,7 @@ export const SitesPage = () => {
         const createData: RequetCreateSite = {
           site: formData,
           equipementIdList: selectedEquipements,
-          dateInstall: '', // Date par défaut (non utilisée)
+          dateInstall: formData.dateCreation, // Date par défaut (non utilisée)
           dateMap: equipementsDatesInstallation
         };
         await siteService.create(createData);
